@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#10282d" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="因你快樂" />
+  <link rel="apple-touch-icon" href="icon.png" />
+  <link rel="icon" type="image/png" href="icon.png" />
+  <title>因你快樂，浮現笑容</title>
+  <style>
+    :root{--ink:#e8dfcf;--muted:#aaa394;--accent:#c29b6c;--deep:#20282a;--panel:rgba(37,43,43,.88);--line:rgba(221,207,184,.16)}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{overflow:hidden;background:#1d2526;color:var(--ink);font-family:"Noto Serif TC","Songti TC","PMingLiU",serif;-webkit-tap-highlight-color:transparent}
+    button{font:inherit}
+    #app{height:100%;min-height:100dvh;position:relative;isolation:isolate;background:linear-gradient(180deg,rgba(31,37,37,.12),rgba(25,30,31,.58)),var(--scene-bg,linear-gradient(145deg,#6f7771,#424c4d 55%,#252e30));transition:background 1.7s ease}
+    #app::before{content:"";position:absolute;inset:0;z-index:-1;opacity:.3;background:repeating-linear-gradient(0deg,transparent 0 3px,rgba(247,232,205,.018) 4px),radial-gradient(circle at 72% 22%,rgba(208,181,139,.14),transparent 30%),linear-gradient(105deg,rgba(119,91,65,.06),transparent 45%);pointer-events:none}
+    #app::after{content:"";position:absolute;inset:0;z-index:-1;box-shadow:inset 0 0 140px rgba(20,24,25,.66);pointer-events:none}
+    .screen{display:none;height:100%;padding:max(24px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(22px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left))}
+    .screen.active{display:flex}
+    #title-screen{align-items:center;justify-content:center;text-align:center;background:linear-gradient(180deg,rgba(46,52,51,.18),rgba(27,32,33,.76))}
+    .title-wrap{width:min(620px,100%);animation:fade 1.6s both}
+    .year-mark{letter-spacing:.34em;color:var(--accent);font:12px/1.5 ui-monospace,monospace;margin-bottom:25px}
+    h1{font-weight:500;letter-spacing:.12em;font-size:clamp(31px,7vw,58px);margin:0;line-height:1.45;text-shadow:0 3px 30px rgba(18,22,23,.8);color:#eee4d3}
+    .subtitle{color:var(--muted);font-size:14px;letter-spacing:.16em;margin:16px 0 55px}
+    .menu{display:grid;gap:12px;width:min(300px,90%);margin:auto}
+    .menu button,.choice{border:1px solid var(--line);background:rgba(45,51,50,.68);color:var(--ink);padding:14px 18px;cursor:pointer;transition:.3s;border-radius:2px}
+    .menu button:hover,.choice:hover,.choice:focus-visible{border-color:rgba(194,155,108,.58);background:rgba(65,69,65,.86);transform:translateY(-1px);outline:none}
+    .menu button:disabled{opacity:.35;cursor:default;transform:none}
+    .version{position:absolute;bottom:max(9px,env(safe-area-inset-bottom));right:max(12px,env(safe-area-inset-right));color:#748286;font:10px ui-monospace,monospace}
+    #game-screen{flex-direction:column;max-width:900px;margin:auto}
+    .topbar{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;border-bottom:1px solid var(--line);padding:3px 2px 13px;color:var(--muted);font:12px/1.5 ui-monospace,monospace;letter-spacing:.08em}
+    .location{text-align:right;color:#cfc1a9}
+    .story{width:min(720px,100%);margin:auto;overflow-y:auto;padding:clamp(28px,7vh,68px) 2px 25px;scrollbar-width:none;mask-image:linear-gradient(to bottom,transparent 0,#000 28px,#000 100%)}
+    .story::-webkit-scrollbar{display:none}
+    .chapter{color:var(--accent);font-size:12px;letter-spacing:.24em;margin-bottom:20px;text-transform:uppercase}
+    .speaker{font-size:14px;color:#e6be7e;letter-spacing:.12em;margin:0 0 10px;min-height:1em}
+    .text{font-size:clamp(17px,4.15vw,21px);line-height:2.05;letter-spacing:.045em;text-shadow:0 2px 14px rgba(17,21,22,.85);white-space:pre-line;margin:0;animation:rise .7s both}
+    .choices{display:grid;gap:10px;margin-top:31px;padding-bottom:4px;animation:fade .45s both}
+    .choice{text-align:left;line-height:1.55;position:relative;padding-left:44px}
+    .choice span{position:absolute;left:17px;color:var(--accent);font:12px ui-monospace,monospace;top:17px}
+    .continue{margin-top:31px;background:none;border:0;border-bottom:1px solid rgba(194,155,108,.5);color:#dac8aa;padding:8px 0;cursor:pointer;letter-spacing:.12em}
+    .utility{display:flex;gap:10px;justify-content:flex-end;padding-top:11px;border-top:1px solid var(--line)}
+    .icon-btn{border:0;background:transparent;color:#9aa8a7;padding:6px 5px;cursor:pointer;font:12px ui-monospace,monospace}
+    .icon-btn:hover{color:var(--ink)}
+    .overlay{position:absolute;inset:0;background:rgba(3,10,11,.82);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:28px;z-index:10}
+    .overlay.show{display:flex}
+    .card{background:#303938;border:1px solid var(--line);width:min(470px,100%);padding:28px;box-shadow:0 25px 80px rgba(10,13,14,.72)}
+    .card h2{margin:0 0 19px;font-size:20px;font-weight:500;letter-spacing:.12em}
+    .card p{color:var(--muted);line-height:1.8;font-size:14px}
+    .card dl{display:grid;grid-template-columns:90px 1fr;gap:11px;margin:24px 0;color:#d7cdb5;font-size:14px}.card dt{color:#87999a}.card dd{margin:0}
+    .card button{width:100%;margin-top:10px}
+    .people-card{max-height:min(78dvh,720px);overflow-y:auto;scrollbar-width:none}.people-card::-webkit-scrollbar{display:none}
+    .people-intro{margin-bottom:22px!important}
+    .person{padding:18px 0;border-top:1px solid var(--line)}.person:first-of-type{border-top:0}
+    .person-head{display:flex;align-items:baseline;justify-content:space-between;gap:15px;margin-bottom:11px}
+    .person-name{font-size:18px;letter-spacing:.1em;color:#e7dbc6}.person-role{font:11px ui-monospace,monospace;color:#9c988d;text-align:right}
+    .person-line{display:grid;grid-template-columns:66px 1fr;gap:12px;font-size:13px;line-height:1.75;margin-top:7px}.person-label{color:#938e83}.person-value{color:#cbc2b2}
+    .unknown{color:#7f817b;font-style:italic}
+    .log-entry{padding:18px 0;border-top:1px solid var(--line)}.log-entry:first-child{border-top:0}
+    .log-meta{color:#8f948e;font:11px/1.6 ui-monospace,monospace;letter-spacing:.06em;margin-bottom:8px}
+    .log-speaker{color:#d1aa76;font-size:13px;letter-spacing:.08em;margin-bottom:7px}.log-text{color:#d7cfc0;font-size:14px;line-height:1.8;white-space:pre-line}
+    .toast{position:absolute;left:50%;bottom:max(70px,calc(env(safe-area-inset-bottom) + 60px));transform:translate(-50%,10px);opacity:0;background:#e5d3ac;color:#17282a;padding:8px 14px;font-size:12px;transition:.3s;pointer-events:none;z-index:20}.toast.show{opacity:1;transform:translate(-50%,0)}
+    @keyframes fade{from{opacity:0}to{opacity:1}}@keyframes rise{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+    @media(max-height:650px){.story{padding-top:22px}.text{line-height:1.8}.choices{margin-top:18px}.subtitle{margin-bottom:28px}}
+  </style>
+</head>
+<body>
+<main id="app">
+  <section id="title-screen" class="screen active">
+    <div class="title-wrap">
+      <div class="year-mark">ISLAND NORTH · 1988</div>
+      <h1>因你快樂，<br>浮現笑容</h1>
+      <div class="subtitle">一段關於相遇、錯過，與長大的故事</div>
+      <div class="menu">
+        <button id="new-game">開始故事</button>
+        <button id="continue-game" disabled>繼續</button>
+        <button id="more-games">更多 LeoTsai 製作</button>
+      </div>
+    </div>
+    <div class="version">CHAPTER 04 · 0.5</div>
+  </section>
+
+  <section id="game-screen" class="screen">
+    <header class="topbar"><div id="date">1988年8月31日｜星期三</div><div class="location" id="location">島北市・陳家</div></header>
+    <article class="story" id="story">
+      <div class="chapter" id="chapter"></div><div class="speaker" id="speaker"></div><p class="text" id="text"></p><div class="choices" id="choices"></div>
+    </article>
+    <footer class="utility"><button class="icon-btn" id="log-btn">紀錄</button><button class="icon-btn" id="people-btn">人物手札</button><button class="icon-btn" id="status-btn">隨身物品</button><button class="icon-btn" id="save-btn">儲存</button><button class="icon-btn" id="title-btn">回到標題</button></footer>
+  </section>
+
+  <div class="overlay" id="overlay"><div class="card"><h2>宇軒的口袋</h2><p>這裡只會顯示宇軒自己知道的事。人的心情，沒有數字可以確認。</p><dl id="status-list"></dl><div class="menu"><button id="close-overlay">關閉</button></div></div></div>
+  <div class="overlay" id="people-overlay"><div class="card people-card"><h2>人物手札</h2><p class="people-intro">宇軒對身邊人們的認識。沒有親耳聽見、親眼看見的事情，不會記錄在這裡。</p><div id="people-list"></div><div class="menu"><button id="close-people">闔上手札</button></div></div></div>
+  <div class="overlay" id="log-overlay"><div class="card people-card"><h2>對話紀錄</h2><p class="people-intro">最近經過的兩頁內容。</p><div id="log-list"></div><div class="menu"><button id="close-log">返回故事</button></div></div></div>
+  <div class="toast" id="toast">已儲存</div>
+</main>
+<script>
+const SAVE_KEY='smile-novel-save-v1';
+const scenes={
+ intro:{chapter:'序章｜夏末',date:'1988年8月31日｜星期三',location:'島北市・陳家',bg:'linear-gradient(145deg,#727873,#485150 52%,#293132)',text:'在手機還不是每個人都擁有的東西以前，想見一個人，得先約好時間與地點。\n\n如果對方沒有出現，你唯一能做的，往往只有等待。',next:'radio'},
+ radio:{speaker:'收音機',text:'「……明日島北地區仍為多雲午後陣雨。提醒各位聽眾，出門別忘了攜帶雨具。」\n\n主持人的聲音被一陣沙沙雜訊吞掉。陳宇軒伸手拍了拍收音機，音樂才重新浮出來。',next:'room'},
+ room:{text:'錄音帶轉到盡頭，喀一聲停了。\n\n書桌上壓著島北高中的新生通知，旁邊是讀到一半的小說。明天開學；母親已經第三次提醒他早點睡。',choices:[['繼續把小說讀完','novel'],['把錄音帶翻面，再聽一次','music'],['關掉檯燈，早點睡','sleep']]},
+ novel:{text:'他把通知單推遠了一點，翻回夾著公車票的那頁。\n\n故事裡的人總知道自己要去哪裡。宇軒不知道。他只希望時間走快一點，最好一眨眼就已經是個不必被管的大人。',effect:s=>{s.flags.restless=true;s.items.push('讀到一半的小說')},next:'mother'},
+ music:{text:'鉛筆插進卡帶的齒輪，鬆掉的帶子被慢慢捲緊。按下播放鍵後，歌聲有些失真，卻仍填滿整個房間。\n\n宇軒想，也許長大以後，他會買一整面牆的唱片。',effect:s=>{s.flags.music=true;s.items.push('混音錄音帶')},next:'mother'},
+ sleep:{text:'宇軒把鬧鐘轉到六點半。黑暗中，客廳的電視聲、妹妹削鉛筆的聲音，以及父親還沒回家的空位，都比平常清楚。\n\n他閉上眼睛，卻很久沒有睡著。',effect:s=>{s.flags.rested=true},next:'mother'},
+ mother:{speaker:'媽媽',text:'「宇軒，明天第一天，不要遲到。還有，高中開始不能再像國中那樣混，聽到沒有？」\n\n她沒等回答，便替他把房門帶上。門縫的光越來越窄。',choices:[['「知道啦。」','reply'],['假裝已經睡著','silent']]},
+ reply:{speaker:'陳宇軒',text:'「知道啦。」\n\n聲音比他原本想的更不耐煩。門外安靜了一會兒，腳步才離開。',effect:s=>s.flags.spoke=true,next:'morning'},
+ silent:{text:'宇軒沒有出聲。\n\n門外的人似乎又站了一會兒，最後什麼也沒說。',effect:s=>s.flags.silent=true,next:'morning'},
+ morning:{chapter:'第一章｜開學日',date:'1988年9月1日｜星期四',location:'島北市・清晨',bg:'linear-gradient(155deg,#9b8267,#667472 47%,#38474a)',text:'六點三十七分。\n\n窗外傳來送報機車的聲音。夏天還沒真正離開，陽光已經爬上對面公寓的水塔。',next:'sister'},
+ sister:{speaker:'陳以晴',text:'「哥，你再不下來，媽要把你的早餐拿去餵狗了。」\n\n妹妹從門外探進半張臉。她的制服袖口沾著一小點沒洗掉的藍色顏料。',choices:[['問她昨晚又畫了什麼','askart'],['叫她不要亂碰房門','brush'],['抓起書包衝下樓','rush']]},
+ askart:{speaker:'陳宇軒',text:'「妳昨晚又在畫什麼？」\n\n以晴愣了一下，把袖口藏到背後。\n\n「沒有啦……就隨便畫。」\n\n她笑得很輕。宇軒第一次發現，妹妹被問到畫畫時，眼睛會變得不太一樣。',effect:s=>{s.flags.sisterArt=true;s.memories.push('以晴藏在袖口的藍色顏料')},next:'street'},
+ brush:{speaker:'陳宇軒',text:'「不要每次都直接開門啦。」\n\n「誰叫你都不起床。」以晴吐了吐舌頭，跑下樓。',next:'street'},
+ rush:{text:'宇軒看了一眼鬧鐘，抓起書包衝出去。以晴在樓梯口笑他連制服領子都沒翻好。',effect:s=>s.flags.rushed=true,next:'street'},
+ street:{location:'島北市・民生東路',bg:'linear-gradient(145deg,#a58c6d,#667675 50%,#354345)',text:'街角早餐店冒著白煙，郵差把信塞進一排鐵皮信箱。公車站前擠滿穿著不同制服的學生。\n\n宇軒走到巷口時，一顆籃球從背後輕輕撞上他的書包。',next:'jiahao'},
+ jiahao:{speaker:'李家豪',text:'「陳宇軒！第一天就走這麼快，是怕我跟你同班喔？」\n\n家豪把籃球夾在腰間，笑得像暑假根本沒有結束。',choices:[['「最好別再跟你同班。」','tease'],['「你怎麼知道我走這條？」','wonder'],['把球搶過來先跑','play']]},
+ tease:{speaker:'李家豪',text:'「來不及了，我昨天去看分班表——一年三班。你這輩子甩不掉我了。」\n\n他說得理直氣壯，好像「這輩子」真的能一眼看完。',effect:s=>s.flags.jiahaoTease=true,next:'dream'},
+ wonder:{speaker:'李家豪',text:'「你家到學校就這條最快啊。認識你幾年了，這還要猜？」\n\n有些人出現在身邊太久，久到會忘記那也是一種被記得。',effect:s=>s.memories.push('家豪記得自己上學的路'),next:'dream'},
+ play:{text:'宇軒一把抄走籃球往前跑。\n\n「喂！那顆很貴欸！」\n\n兩人的鞋底踏過昨夜留下的水窪，驚得早餐店門口的麻雀一齊飛起。',effect:s=>s.flags.playful=true,next:'dream'},
+ dream:{speaker:'李家豪',text:'「欸，宇軒。」\n\n等紅燈時，家豪忽然盯著對街運動用品店裡的棒球手套。\n\n「你覺得……真的有人可以靠打球過一輩子嗎？」',choices:[['「你不是說要當國手？」','national'],['「不知道，但你可以試試看。」','support'],['「先想辦法別被當掉吧。」','deflect']]},
+ national:{speaker:'陳宇軒',text:'「你不是整天說要當國手？」\n\n「講講而已啦。」家豪笑了，視線卻還留在玻璃後的手套上。',effect:s=>s.flags.heardDream=true,next:'schoolgate'},
+ support:{speaker:'陳宇軒',text:'「不知道。但你真的想，就試試看啊。」\n\n家豪沒有馬上接話。綠燈亮了幾秒，他才用肩膀撞了宇軒一下。\n\n「走啦，快遲到了。」',effect:s=>{s.flags.supportedDream=true;s.memories.push('清晨路口，家豪沒有說出口的夢')},next:'schoolgate'},
+ deflect:{speaker:'陳宇軒',text:'「你先想辦法不要被當掉吧。」\n\n「靠，第一天就在觸我霉頭。」家豪笑罵著往前走。那個問題也就被留在紅燈的另一邊。',effect:s=>s.flags.deflectedDream=true,next:'schoolgate'},
+ schoolgate:{location:'島北高中・校門',bg:'linear-gradient(145deg,#7f8b7d,#566a67 48%,#314245)',text:'七點四十九分。\n\n島北高中的校門比國中大得多。穿制服的人潮向裡湧去，教官的哨音、腳踏車鈴與樹上的蟬聲混在一起。\n\n宇軒跨進校門。那時的他還不知道，接下來遇見的人，會在往後許多年裡，一次又一次回到他的生命。',next:'classroom'},
+ classroom:{location:'島北高中・一年三班',text:'黑板上寫著座位表。家豪果然在最後一排，正隔著半間教室對他揮手。\n\n靠窗的位置，一個綁著馬尾的女生正幫老師把作業簿分成幾疊；另一個女生坐在她桌沿，笑著說了些什麼，害她慌張地差點把整疊簿子弄掉。',choices:[['先去找家豪','toJiahao'],['幫忙撿起掉落的簿子','toGirls'],['安靜找到自己的座位','toSeat']]},
+ toJiahao:{text:'宇軒穿過教室走向最後一排。家豪已經在打聽班上誰會打棒球。\n\n窗邊傳來一陣笑聲。他回頭時，只看見那個外向的女生把掉落的簿子抱回桌上。',effect:s=>s.flags.firstJiahao=true,next:'teacher'},
+ toGirls:{text:'一本簿子滑到宇軒鞋邊。他彎腰撿起來，放回最上面。\n\n綁馬尾的女生小聲說：「謝謝。」\n\n她旁邊的人則大方地看著他。',next:'meetGirls'},
+ meetGirls:{speaker:'張佳穎',text:'「你也是三班的？我叫張佳穎。她是黃雨婷，我們國中就認識了。」\n\n雨婷像是對這種介紹方式有些無奈，只好又對宇軒點了一次頭。',choices:[['自我介紹','introduce'],['指向後排：「我朋友在叫我。」','escape']]},
+ introduce:{speaker:'陳宇軒',text:'「陳宇軒。」\n\n「喔，陳宇軒。」佳穎跟著念了一次，隨即低頭繼續整理作業簿。\n\n那只是開學第一天再普通不過的一次自我介紹。兩個人都沒有特別放在心上。',effect:s=>{s.flags.metProperly=true;s.memories.push('開學第一天，窗邊散落的作業簿')},next:'teacher'},
+ escape:{speaker:'陳宇軒',text:'「我朋友在叫我，謝啦。」\n\n「明明是我們跟你道謝吧？」佳穎在後面笑了一聲。',effect:s=>s.flags.metBriefly=true,next:'teacher'},
+ toSeat:{text:'宇軒照著座位表坐下，把書包掛在椅背。周遭的人很快聊成一片，他翻開新課本，假裝自己很忙。\n\n過了一會兒，一本簿子被遞到他桌上。右上角工整寫著：黃雨婷。',effect:s=>s.flags.observer=true,next:'teacher'},
+ teacher:{speaker:'黃子芸',text:'「各位早安，我姓黃，黃子芸。接下來三年，我是你們的班導師。」\n\n講台上的年輕老師沒有立刻翻點名簿，而是拿起粉筆，在自己的名字旁寫下一句話：\n\n——你想成為什麼樣的人？',next:'question'},
+ question:{speaker:'黃子芸',text:'「不用現在回答我。老實說，十五、六歲就知道答案的人才奇怪。」\n\n班上有人笑了。\n\n「但我希望畢業以前，你們至少有勇氣替自己想一次。」',choices:[['把這句話抄進課本空白處','write'],['覺得只是老師漂亮話','dismiss'],['望向窗外，沒有答案','noanswer']]},
+ write:{text:'宇軒把那句話抄在國文課本的第一頁。字寫得有些歪。\n\n多年以後，他會再次翻到這一頁。',effect:s=>{s.flags.keptQuestion=true;s.items.push('寫著一句問題的國文課本');s.memories.push('黃子芸老師的第一個問題')},next:'ending'},
+ dismiss:{text:'宇軒沒有動筆。大人總喜歡說一些好聽的話，最後還不是只看考試成績。\n\n他那時真心這麼相信。',effect:s=>s.flags.dismissedTeacher=true,next:'ending'},
+ noanswer:{text:'窗外的雲移得很慢。宇軒想了半天，腦中仍是一片空白。\n\n他只知道，自己想快點長大。',effect:s=>s.flags.noFuture=true,next:'ending'},
+ ending:{chapter:'序章・完',date:'1988年9月1日｜星期四',location:'島北高中・一年三班',bg:'linear-gradient(160deg,#99836a,#586b68 48%,#303e41)',text:'風從走廊吹進教室，翻動桌上的課本。\n\n李家豪、張佳穎、黃雨婷、黃子芸。\n\n四個名字，在這一天以前，還沒有同時出現在陳宇軒的人生裡。\n\n而他們誰也不知道，這個看似普通的早晨，會被記得那麼久。',next:'ch1title'},
+ ch1title:{chapter:'第一章｜放學以後',date:'1988年9月9日｜星期五',location:'島北高中・一年三班',bg:'linear-gradient(155deg,#907861,#5d6b68 48%,#354245)',text:'開學後的第九天。\n\n新課本的油墨味淡了，座位不再陌生，班上的人也漸漸有了各自固定的位置。\n\n有些關係，就是從這種誰也沒注意的日常裡開始的。',next:'lateclass'},
+ lateclass:{speaker:'國文老師',text:'「今天的作文，下星期一早自習以前交。張佳穎，麻煩妳收齊之後送到辦公室。」\n\n下課鐘一響，教室立刻被椅子拖動與說話聲填滿。佳穎抱著點名簿站上講台。',next:'collect'},
+ collect:{speaker:'張佳穎',text:'「第三排還有四個沒交！不要以為裝忙我就看不到喔。」\n\n她嘴上很有精神，桌上的作文本卻已經堆得搖搖欲墜。雨婷今天輪值，早一步去了導師辦公室。',choices:[['留下來幫她收另一排','helpcollect'],['提醒家豪交完再走','jiahaowork'],['收好書包，先去福利社','canteen']]},
+ helpcollect:{speaker:'陳宇軒',text:'「我幫妳收靠窗那排。」\n\n佳穎抬頭看了他一眼。\n\n「咦？你今天吃錯藥喔？」',choices:[['「怕妳抱到辦公室前就全掉了。」','jokehelp'],['「快一點，家豪還在等我。」','plainhelp']]},
+ jokehelp:{speaker:'張佳穎',text:'「你很煩欸！」\n\n她笑著拿一本作業本作勢要丟，最後仍輕輕放進宇軒手上的那疊。',effect:s=>s.flags.teasedJiaying=true,next:'sunmoment'},
+ plainhelp:{speaker:'張佳穎',text:'「喔……好。那邊五個，謝啦。」\n\n宇軒沿著窗邊一桌桌收過去。佳穎則低頭核對座號。',effect:s=>s.flags.helpedPlainly=true,next:'sunmoment'},
+ jiahaowork:{text:'家豪的作文本果然還是一片空白。宇軒用筆敲了敲他的桌面。\n\n「至少寫個名字。」\n\n「名字可以算三百字裡面嗎？」家豪一臉認真。',effect:s=>s.flags.checkedJiahao=true,next:'sunmomentAlt'},
+ canteen:{text:'福利社的冰櫃只剩最後一瓶麥香奶茶。宇軒付了十二元，隔著玻璃看見同學陸續走出校門。\n\n回到教室時，佳穎仍在跟那疊作業奮戰。',effect:s=>{s.flags.boughtDrink=true;s.items.push('麥香奶茶');},next:'offerdrink'},
+ offerdrink:{choices:[['把奶茶放到佳穎桌上，幫她繼續收','drinkhelp'],['坐回位子慢慢喝','watchcollect']]},
+ drinkhelp:{speaker:'張佳穎',text:'「幹嘛？賄賂作業股長也沒用喔。」\n\n「福利社最後一瓶。妳要不要隨便。」\n\n佳穎盯著奶茶，又看了看宇軒，笑著把它推回兩人中間。\n\n「一人一半啦。」',effect:s=>{s.flags.sharedDrink=true;s.memories.push('兩個人分掉的最後一瓶麥香奶茶')},next:'sunmoment'},
+ watchcollect:{text:'宇軒坐在自己的位置喝奶茶。幾分鐘後，佳穎終於抱起高得擋住視線的作業，搖搖晃晃地走出教室。\n\n她走到門口時回頭瞪了他一眼。\n\n「看什麼看，也不知道幫忙。」',effect:s=>s.flags.didNotHelp=true,next:'corridor'},
+ sunmomentAlt:{text:'家豪最後只擠出兩行字，便嚷著要去球場。宇軒替他把作文本送到講台，順手接住佳穎懷裡快滑下來的幾本。',next:'sunmoment'},
+ sunmoment:{text:'午後四點十七分。\n\n宇軒低頭按著座號，把最後一本作業放整齊。西斜的陽光穿過老舊百葉窗，在他的制服與側臉留下細長的亮痕。\n\n佳穎本來正在說話，聲音卻忽然停了。',next:'heartbeat'},
+ heartbeat:{speaker:'陳宇軒',text:'「怎麼了？漏了誰的嗎？」\n\n「……沒有。」\n\n佳穎立刻低頭翻點名簿。紙上的座號突然變得很難看懂。',effect:s=>{s.flags.jiayingNoticed=true;s.memories.push('放學後灑進教室的夕陽')},next:'carry'},
+ carry:{speaker:'張佳穎',text:'「那個……你可以順便幫我搬去辦公室嗎？」\n\n她說完又補了一句：\n\n「反正你都幫一半了。」',choices:[['陪她送去辦公室','officewalk'],['把作業交給她，去找家豪','leaveforjiahao']]},
+ officewalk:{location:'島北高中・西側走廊',text:'放學後的走廊安靜許多。遠處的管樂社反覆練著同一小節，操場上偶爾傳來球棒擊中球的聲音。\n\n兩人並肩走著，一時找不到話題。',choices:[['問她為什麼願意當幹部','askcadre'],['問她平常放學都做什麼','askafter'],['什麼都不說','quietwalk']]},
+ askcadre:{speaker:'張佳穎',text:'「不是我願意，是黃老師點我的好不好。」\n\n她壓低聲音。\n\n「不過也還好啦。至少可以光明正大叫別人交作業，滿爽的。」',effect:s=>s.flags.askedCadre=true,next:'officeend'},
+ askafter:{speaker:'張佳穎',text:'「有時候去雨婷家，有時候練琴。我媽最近還說要帶我去看一台新的。」\n\n「鋼琴？」\n\n「不然咧，電冰箱喔？」她笑出聲。',effect:s=>s.flags.knowsPiano=true,next:'officeend'},
+ quietwalk:{text:'兩個人的腳步聲在走廊裡一前一後。快到辦公室時，佳穎突然哼起剛才管樂社練的旋律。\n\n她哼錯了一個音，自己先笑了。',effect:s=>s.flags.heardHum=true,next:'officeend'},
+ officeend:{location:'島北高中・教師辦公室外',speaker:'張佳穎',text:'「謝啦，陳宇軒。」\n\n她第一次連名帶姓叫他，語氣卻不像開學那天那麼陌生。',next:'corridor'},
+ leaveforjiahao:{text:'宇軒把那疊作業穩穩放回佳穎懷裡。\n\n「家豪在等我，妳自己可以吧？」\n\n「當然可以啊。」她回答得很快。\n\n宇軒跑遠後，佳穎才小聲對著空走廊說：「……本來還想跟你聊一下的。」',effect:s=>s.flags.missedWalk=true,next:'ballfield'},
+ corridor:{location:'島北高中・穿堂',bg:'linear-gradient(150deg,#8b7865,#536461 52%,#303d40)',text:'宇軒走下樓時，天色已經比剛才暗了一些。穿堂前，雨婷一個人蹲在地上，把散落的講義塞回牛皮紙袋。',choices:[['蹲下來幫她撿','helpyuting'],['叫住前面的佳穎來幫忙','calljiaying'],['問她怎麼還沒回家','asklate']]},
+ helpyuting:{speaker:'黃雨婷',text:'「謝、謝謝……我自己可以。」\n\n她越急，紙張反而越塞不進去。宇軒沒有催她，只把講義按頁碼排好。',effect:s=>{s.flags.helpedYuting=true;s.memories.push('雨婷裝滿講義的舊牛皮紙袋')},next:'booktalk'},
+ calljiaying:{speaker:'張佳穎',text:'「班長，妳怎麼每次都拿那麼多東西回去？」\n\n佳穎熟練地接過半疊，顯然不是第一次。雨婷只是笑笑。',effect:s=>s.flags.sawFriendship=true,next:'booktalk'},
+ asklate:{speaker:'黃雨婷',text:'「老師要我幫忙整理成績……」\n\n她把紙袋抱緊了一些，看起來很怕錯過公車。',effect:s=>s.flags.noticedYutingRush=true,next:'booktalk'},
+ booktalk:{text:'一冊小說從紙袋底下露出書角。宇軒認得封面，是他上個月在書店看了很久、最後沒有買的那本。',choices:[['問她好不好看','askbook'],['假裝沒有注意到','ignorebook']]},
+ askbook:{speaker:'陳宇軒',text:'「這本好看嗎？」\n\n雨婷原本緊張的神情鬆了一點。\n\n「很好看。你也喜歡這個作者？」\n\n他們第一次發現，彼此讀過許多相同的故事。',effect:s=>{s.flags.bookBond=true;s.memories.push('和雨婷第一次談起小說')},next:'busmoney'},
+ ignorebook:{text:'宇軒沒有問。雨婷把小說往紙袋裡又推了一點，向他點頭道謝後便準備離開。',effect:s=>s.flags.ignoredBook=true,next:'busmoney'},
+ busmoney:{text:'雨婷走到校門口，摸遍制服口袋後忽然停下來。公車已經在路口轉彎。\n\n她低頭看著手裡僅有的幾枚硬幣。',choices:[['借她公車錢','lendmoney'],['陪她走到下一站看看','walkbus'],['認為她應該自己能處理','letgo']]},
+ lendmoney:{speaker:'陳宇軒',text:'「差多少？」\n\n「不用，我走回去就好。」\n\n「明天再還我。」宇軒把十元硬幣放進她手裡，沒讓她繼續拒絕。',effect:s=>{s.flags.lentYuting=true;s.memories.push('借給雨婷的十元硬幣')},next:'ballfield'},
+ walkbus:{text:'「下一站公車也會停吧，走過去看看。」\n\n他們沿著圍牆走。雨婷始終不肯說自己住得多遠，只在公車出現時第一次露出放心的表情。',effect:s=>{s.flags.walkedYuting=true;s.memories.push('和雨婷趕上的末班公車')},next:'ballfield'},
+ letgo:{text:'「那我先走了。」\n\n宇軒轉身後，雨婷仍站在站牌下。公車從她面前駛過，沒有停。',effect:s=>s.flags.leftYuting=true,next:'ballfield'},
+ ballfield:{location:'島北高中・操場',bg:'linear-gradient(155deg,#806e5c,#4c5c59 48%,#2a383b)',text:'操場邊只剩幾個運動社團。家豪站在棒球隊練習區外，隔著鐵網看學長打擊。\n\n他手裡還抱著早上那顆籃球，卻看得一動也不動。',next:'coach'},
+ coach:{speaker:'棒球隊學長',text:'「同學，你看好幾天了。想加入就去拿報名表啊。」\n\n家豪像被抓到做壞事，立刻搖頭。\n\n「沒有啦，我等朋友而已。」',choices:[['當場拆穿他','expose'],['陪他繼續看，不說破','staywatch'],['拉他去拿報名表','getform']]},
+ expose:{speaker:'陳宇軒',text:'「他從國中就說想當國手。」\n\n「靠，陳宇軒！」\n\n學長笑著把一張報名表塞進家豪懷裡。家豪嘴上罵個不停，手卻沒有把紙丟掉。',effect:s=>s.flags.exposedDream=true,next:'rain'},
+ staywatch:{text:'宇軒站到他旁邊。兩人隔著鐵網看了很久。\n\n「要不要去報名？」\n\n「……再看看啦。」\n\n有些夢想在能被說出口以前，需要先有人陪著沉默。',effect:s=>{s.flags.silentSupport=true;s.memories.push('和家豪隔著鐵網看的練習')},next:'rain'},
+ getform:{speaker:'陳宇軒',text:'「走啦，拿一張又不會死。」\n\n宇軒推著家豪走向球場。家豪掙扎得很大聲，真正走到學長面前時，卻忽然安靜了。',effect:s=>{s.flags.gotBaseballForm=true;s.items.push('替家豪保管的棒球隊報名表')},next:'rain'},
+ rain:{location:'島北高中・校門',bg:'linear-gradient(160deg,#6d716c,#455250 48%,#283436)',text:'五點二十三分，雨毫無預兆地落下。\n\n屋簷很快站滿沒帶傘的學生。那個年代，沒有人能傳訊息叫家人來接，也查不到雨什麼時候會停。',choices:[['和家豪冒雨跑去車站','runrain'],['留在屋簷下等雨變小','waitrain'],['去警衛室借公共電話','phonehome']]},
+ runrain:{text:'「三、二、一——跑！」\n\n兩個人衝進雨裡。制服很快濕透，家豪卻笑得像剛贏了一場比賽。',effect:s=>s.memories.push('開學後第一場淋透制服的雨'),next:'afterrain'},
+ waitrain:{text:'雨打在鐵皮遮雨棚上，聲音大得不必勉強聊天。\n\n宇軒看見佳穎和雨婷共撐一把傘走過校門。佳穎回頭時似乎看見了他，舉起手揮了兩下。',effect:s=>s.flags.sawUmbrella=true,next:'afterrain'},
+ phonehome:{location:'島北高中・警衛室',text:'公共電話旁排了五個人。輪到宇軒時，他投進硬幣，熟練地撥出家裡號碼。\n\n電話響了很久，沒有人接。硬幣掉進退幣口，發出清脆的一聲。',effect:s=>s.memories.push('那通沒有人接的電話'),next:'afterrain'},
+ afterrain:{location:'島北市・傍晚',bg:'linear-gradient(155deg,#70675f,#495654 50%,#2b3638)',text:'雨後的島北市像蒙上一層灰藍色的薄膜。公車駛過積水，唱片行櫥窗裡的燈剛剛亮起。\n\n宇軒還不知道，今天那些微不足道的選擇，有些人會記得很久。',next:'jiayinghome'},
+ jiayinghome:{location:'張家・客廳',speaker:'張佳穎',text:'雨沿著落地窗緩慢滑下，把窗外的路燈暈成一團模糊的淡黃色。客廳沒有開大燈，只有鋼琴旁那盞罩著米白燈罩的立燈，靜靜照著琴鍵。\n\n佳穎坐在琴前，彈的是早已背熟的曲子。母親還沒下班，哥哥的房門關著；偌大的屋子裡，只剩節拍器規律擺動，和雨水敲在遮雨棚上的細碎聲音。\n\n彈到第二段，她的手指忽然慢了半拍。午後教室的景象毫無預兆地浮現——堆疊的作業本、百葉窗間斜斜落下的陽光，還有那張被照亮的側臉。\n\n琴音落錯了。\n\n她停下來，讓最後一個不和諧的音在客廳裡慢慢消失。黑色琴蓋映出她自己愣愣的表情。\n\n「……陳宇軒。」\n\n那個名字輕得幾乎被雨聲蓋過。佳穎盯著自己的手指，耳根一點點熱起來。\n\n「我在幹嘛啊……」\n\n她低下頭重新起拍，卻連續三次，都在同一個地方彈錯。',next:'ch1end'},
+ ch1end:{chapter:'第一章・完',date:'1988年9月9日｜星期五',location:'島北市・雨夜',bg:'linear-gradient(155deg,#625f5a,#3f4b4a 52%,#252f31)',text:'窗外又開始下雨。\n\n那一晚，有人把棒球隊報名表壓在課本最下面；有人在昏黃的燈下讀著借來的小說；也有人第一次因為想起一張側臉，彈錯了熟悉的琴譜。\n\n至於陳宇軒，他對這一切仍然一無所知。',next:'ch2title'},
+ ch2title:{chapter:'第二章｜星期六，老地方',date:'1988年9月10日｜星期六',location:'島北市・陳家',bg:'linear-gradient(150deg,#887664,#596864 50%,#354244)',text:'星期六的上午，時間總比平日走得慢。\n\n不用趕著擠七點四十分的公車，也沒有鐘聲提醒下一堂課。電風扇在天花板上緩慢轉動，把廚房裡煎蛋和醬油的氣味一陣陣送進客廳。',next:'satmorning'},
+ satmorning:{speaker:'媽媽',text:'「下午又要出去？」\n\n母親站在餐桌旁，把剛曬乾的制服一件件摺好。收音機播著週末點歌節目，主持人念完一封聽眾來信，接著放起一首宇軒沒有聽過的慢歌。\n\n「才剛開學，不要整天只知道玩。功課寫完了嗎？」',choices:[['「跟家豪約好了，晚餐前回來。」','promisehome'],['「去書店買參考書。」','liebook'],['先把桌上的碗洗掉再說','washfirst']]},
+ promisehome:{speaker:'陳宇軒',text:'「跟家豪約好了，晚餐前就回來。」\n\n母親看了牆上的時鐘一眼。\n\n「六點。超過六點就自己在門口站到你爸回來。」\n\n這句話不像玩笑。宇軒點點頭，把時間牢牢記在心裡。',effect:s=>s.flags.promisedSix=true,next:'sistersat'},
+ liebook:{speaker:'陳宇軒',text:'「去書店買參考書啦。」\n\n母親停下摺衣服的手，看了他幾秒。\n\n「那收據帶回來。」\n\n宇軒低頭喝完豆漿，忽然覺得這個謊比想像中麻煩。',effect:s=>s.flags.liedBook=true,next:'sistersat'},
+ washfirst:{text:'宇軒沒有立刻回答。他把早餐的碗收進水槽，開水時先是一陣管線的低鳴，接著冰涼的水才從水龍頭流下。\n\n母親在身後安靜了一會兒。\n\n「六點以前回來。」她最後只說。',effect:s=>s.flags.washedDishes=true,next:'sistersat'},
+ sistersat:{speaker:'陳以晴',text:'「哥，你要去老地方喔？」\n\n以晴趴在客廳地板上畫圖，身旁散著削短的色鉛筆。圖畫紙上是一排被雨淋濕的房子，屋頂卻塗著很亮的橘色。',choices:[['蹲下來看她畫完','watchart'],['提醒她別跟媽媽告密','secrecy'],['拿外套準備出門','leavequick']]},
+ watchart:{speaker:'陳宇軒',text:'「為什麼下雨，屋頂還是橘色的？」\n\n「因為裡面有人啊。」以晴沒有抬頭，繼續把最後一扇窗塗亮。\n\n宇軒似懂非懂地看了一會兒。玄關外傳來鄰居拖動鐵門的聲音，陽光從紗窗落在紙上，顏色像是舊糖紙一樣透明。',effect:s=>{s.flags.sawSisterPainting=true;s.memories.push('以晴畫裡雨天仍然明亮的屋頂')},next:'setout'},
+ secrecy:{speaker:'陳宇軒',text:'「不要跟媽說我可能會去電動間。」\n\n以晴終於抬頭，伸出沾著橘色顏料的小指。\n\n「回來幫我買汽水。」\n\n兩個人用最不可靠的方式完成了一筆交易。',effect:s=>s.flags.promisedSoda=true,next:'setout'},
+ leavequick:{text:'宇軒套上鞋，把門輕輕帶上。門鎖闔起的喀噠聲，將母親的叮嚀和收音機裡的慢歌一起關在屋內。',next:'setout'},
+ setout:{location:'島北市・午後',bg:'linear-gradient(145deg,#9a846b,#68736c 50%,#3d4a4a)',text:'昨夜的雨在騎樓邊留下幾攤尚未乾透的水。修鞋攤的老闆坐在矮凳上看報紙，五金行門口吊著的塑膠水桶被風吹得互相碰撞。\n\n宇軒口袋裡有四十二元。沒有隨身聽，也沒有任何東西能在路上替他消磨時間。他只好一邊走，一邊讀遍每根電線桿上的補習班廣告。',next:'oldplace'},
+ oldplace:{location:'榕樹公園・籃球場旁',text:'所謂「老地方」，其實只是榕樹公園角落一張掉漆的綠色長椅。\n\n國中三年裡，宇軒和家豪曾在這裡分過一袋三十元的薯條、躲過午後雷雨，也曾什麼都不做，只看著球場上的大人打到天黑。\n\n長椅上方的時鐘指著一點五十三分。家豪還沒到。',next:'waitone'},
+ waitone:{text:'兩點整。\n\n一輛公車在路口停下，車門吐出幾名乘客，又帶著柴油味駛遠。宇軒望著每一個從轉角出現的人，沒有一個是家豪。\n\n他用鞋尖把地上的小石子踢進排水溝。',next:'waittwo'},
+ waittwo:{text:'兩點十二分。\n\n球場上的一場三對三結束了。賣叭噗的老人推著車慢慢經過，銅鈴聲從近處晃到遠處。\n\n宇軒開始懷疑，是不是自己記錯了時間。可昨天放學前，家豪明明說的是「星期六下午兩點，老地方」。',choices:[['繼續坐在原位等','keepwaiting'],['去雜貨店借電話打到家豪家','calljiahao'],['到附近繞一圈找他','searchjiahao']]},
+ keepwaiting:{text:'宇軒往長椅深處挪了一點，決定再等十分鐘。\n\n沒有訊息可以確認，也沒有地圖能顯示一個人現在走到哪裡。等待不是什麼浪漫的事，只是一次又一次抬頭，然後一次又一次失望。\n\n兩點二十八分，榕樹葉影已經從他的左腳移到了右腳。',effect:s=>s.flags.waitedJiahao=true,next:'latearrival'},
+ calljiahao:{location:'榕樹公園旁・雜貨店',text:'雜貨店裡比外面暗。玻璃櫃放著一排糖果、橡皮擦和小包裝的科學麵，冰箱壓縮機發出持續的低鳴。\n\n老闆娘指了指櫃台上的米色電話。\n\n「市內一通兩塊，自己撥。」',next:'phonecall'},
+ phonecall:{text:'宇軒撥出早已背熟的號碼。轉盤每次回彈都發出細碎的喀啦聲。\n\n電話響了六次，終於有人接起。',next:'jiahaofather'},
+ jiahaofather:{speaker:'李家豪的父親',text:'「喂，李公館。」\n\n電話另一頭的聲音低沉而陌生。宇軒握緊聽筒。\n\n「叔叔您好，我找家豪。」\n\n沉默了兩秒。\n\n「他出去了。」\n\n電話隨即被掛斷，只留下短促的忙音。',effect:s=>{s.flags.calledJiahaoHome=true;s.memories.push('家豪父親在電話裡冷淡的聲音')},next:'latearrival'},
+ searchjiahao:{text:'宇軒沿著公園外圍走了一圈。漫畫店裡擠滿翻書的人，撞球間的布簾後傳出球碰撞的清脆聲音。\n\n他在每一間店門口停一下，仍然沒看到家豪。\n\n等他繞回長椅，已經兩點半。',effect:s=>s.flags.searchedJiahao=true,next:'latearrival'},
+ latearrival:{location:'榕樹公園・籃球場旁',speaker:'李家豪',text:'「宇軒！」\n\n聲音從馬路對面傳來。家豪跑過斑馬線，制服以外的他看起來有些陌生：褪色的運動短褲、洗得發白的球鞋，額前的頭髮全被汗黏在一起。\n\n他彎著腰喘了很久，直到紅燈重新亮起才終於說：\n\n「抱歉啦……臨時有點事。」',choices:[['問他到底發生什麼事','asklatewhy'],['抱怨自己等了快四十分鐘','complainlate'],['把長椅上的位置讓給他','giveseat']]},
+ asklatewhy:{speaker:'陳宇軒',text:'「什麼事？你家離這裡又沒有多遠。」\n\n家豪拿衣領搧著風，視線落在球場另一側。\n\n「就……我爸突然叫我整理房間。」\n\n他回答得太快，像是一路上已經練習過。',effect:s=>s.flags.suspectsJiahao=true,next:'formreveal'},
+ complainlate:{speaker:'陳宇軒',text:'「我等你快四十分鐘欸。」\n\n「對不起啦，請你喝飲料。」\n\n家豪摸遍口袋，最後只掏出三枚一元硬幣。兩個人看著那三塊錢，一起笑了出來，剛才的火氣也散掉一半。',effect:s=>s.flags.complainedLate=true,next:'formreveal'},
+ giveseat:{text:'宇軒沒有追問，只往旁邊挪出位置。家豪坐下後，兩個人安靜地看了一會兒球場。\n\n風吹過高處的榕樹葉。家豪的呼吸慢慢平穩，手卻一直壓著褲子口袋裡某張被揉皺的紙。',effect:s=>s.flags.gaveQuietSpace=true,next:'formreveal'},
+ formreveal:{text:'家豪最後還是把紙拿了出來。\n\n那是棒球隊入隊報名表。原本平整的紙被揉成許多軟皺，右下角「家長簽章」的位置仍是一片空白。',next:'familyfight'},
+ familyfight:{speaker:'李家豪',text:'「我爸看到了。」\n\n他用拇指反覆摳著紙張邊緣。\n\n「他說，花那麼多錢讓我念高中，不是要我去操場曬太陽。還說我們家沒有人可以養我一輩子。」\n\n家豪笑了一下。那個笑容和平常很像，卻沒有看宇軒。\n\n「算了啦。他講得也沒錯。」',choices:[['「他講得對不代表你就得放棄。」','pushdream'],['「至少先去參加入隊測驗。」','tryoutfirst'],['陪他坐著，不急著勸','sitwithhim']]},
+ pushdream:{speaker:'陳宇軒',text:'「他講得對，不代表你就得放棄啊。」\n\n「你說得很簡單欸。」家豪皺起眉，語氣第一次有些尖。\n\n風把報名表的一角吹得不停顫動。過了很久，他才小聲補了一句：\n\n「……可是謝啦。」',effect:s=>{s.flags.knowsJiahaoFamilyPressure=true;s.flags.pushedDream=true},next:'girlsarrive'},
+ tryoutfirst:{speaker:'陳宇軒',text:'「你都還沒進球隊，現在放棄不是很奇怪嗎？至少先去測驗。」\n\n家豪把表格翻過來又翻回去。\n\n「如果沒選上，不是更丟臉？」\n\n「那也比你以後一直想自己到底選不選得上好吧。」\n\n這次家豪沒有反駁。',effect:s=>{s.flags.knowsJiahaoFamilyPressure=true;s.flags.encouragedTryout=true},next:'girlsarrive'},
+ sitwithhim:{text:'宇軒沒有立刻說那些「夢想比較重要」的話。\n\n球場傳來鞋底摩擦地面的聲音，一群小孩追著滾出界外的籃球跑過兩人面前。家豪一直低著頭，直到報名表不再被他的手揉出新的皺痕。\n\n「我其實很想去。」他終於說。',effect:s=>{s.flags.knowsJiahaoFamilyPressure=true;s.flags.heardTrueDream=true;s.memories.push('家豪說「我其實很想去」時的聲音')},next:'girlsarrive'},
+ girlsarrive:{speaker:'張佳穎',text:'「你們兩個坐在這裡開追悼會喔？」\n\n熟悉的聲音從長椅後方冒出來。佳穎手裡拿著一支快融化的紅豆冰棒，另一隻手提著唱片行的紙袋。雨婷站在她旁邊，抱著兩本用牛皮紙包好的書。',next:'chance'},
+ chance:{text:'在沒有社群動態、沒有定位分享的年代，遇見同學通常不是誰精心安排的事。\n\n只是同一個午後，走上同一條街，然後恰好在榕樹下認出了彼此。\n\n也正因為如此，一次偶遇才顯得像真正的驚喜。',choices:[['問她們怎麼會在這裡','askgirls'],['先把家豪的報名表收起來','hideform'],['指著正在滴的冰棒提醒佳穎','meltingice']]},
+ askgirls:{speaker:'張佳穎',text:'「前面唱片行有進新的琴譜，我來看啊。雨婷去舊書攤，我們就一起走。」\n\n她晃了晃手裡的紙袋。\n\n「你們咧？兩個大男生約會？」',effect:s=>s.flags.knowsPiano=true,next:'groupinvite'},
+ hideform:{text:'宇軒下意識替家豪把報名表摺起來。佳穎注意到了，卻沒有追問，只把目光移向球場。\n\n雨婷則像是看懂了什麼，安靜地站在一旁。',effect:s=>s.flags.protectedJiahaoSecret=true,next:'groupinvite'},
+ meltingice:{speaker:'陳宇軒',text:'「妳的冰棒快滴到鞋子了。」\n\n「啊！」\n\n佳穎慌忙低頭，紅豆糖水仍在白襪上留下了一小點。家豪終於笑出聲，剛才沉重的空氣也被這場小災難沖淡。',effect:s=>s.flags.warnedIce=true,next:'groupinvite'},
+ groupinvite:{speaker:'張佳穎',text:'「我們要去前面的美而冰果室。你們要不要一起？」\n\n家豪看向宇軒，似乎還沒從剛才的談話裡完全走出來。雨婷則低頭看了看手錶。',choices:[['四個人一起去','joinice'],['說自己沒帶多少錢','mentionmoney'],['陪家豪留在球場','staycourt']]},
+ joinice:{speaker:'李家豪',text:'「走啊，反正有人遲到說要請客。」宇軒說。\n\n「等一下，我什麼時候說請四個？」\n\n佳穎走在前面笑得很大聲。雨婷也偷偷笑了，只是立刻用書擋住嘴。',effect:s=>s.flags.groupOuting=true,next:'icestore'},
+ mentionmoney:{speaker:'陳宇軒',text:'「我身上沒多少錢。」\n\n「我們也不是要去吃滿漢全席。」佳穎說。\n\n雨婷抬起頭，小聲補了一句：「坐著聊天也可以，不一定要點東西。」\n\n她像是早已替自己想過這個答案。',effect:s=>s.flags.noticedYutingMoney=true,next:'icestore'},
+ staycourt:{speaker:'陳宇軒',text:'「妳們先去吧，我們還有點事。」\n\n「神神祕祕的。」佳穎拖長聲音，從紙袋裡撕下一小角，飛快寫了幾個字。\n\n「如果改變主意，我們大概待到四點。」\n\n紙上是冰果室的地址。她把紙塞進宇軒手裡，轉身追上雨婷。',effect:s=>s.flags.stayedWithJiahao=true,next:'courtquiet'},
+ courtquiet:{text:'兩個人又坐了一會兒。球場上的人換了一批，陽光也越過鐵網，把長椅切成明暗兩半。\n\n家豪把報名表重新攤在膝上，用手掌一點一點壓平。\n\n「去吧。」他忽然說，「不然她們真的會以為我們在約會。」',next:'icestore'},
+ icestore:{location:'美而冰果室',bg:'linear-gradient(150deg,#9b8067,#6d7064 52%,#414a48)',text:'冰果室的玻璃門上貼著褪色的汽水廣告。推門時，一串小銅鈴清脆地響了兩下。\n\n店裡有股刨冰糖水、舊木頭與冷氣機灰塵混在一起的味道。牆上的電視正在重播綜藝節目，畫面偶爾從中間往上跳，老闆便隔著櫃台拍一下機殼。\n\n四個人擠進靠窗的小桌。這是他們第一次在學校以外坐在一起。',next:'orderice'},
+ orderice:{text:'菜單被透明塑膠墊壓在桌面下。紅豆牛奶冰二十五元，木瓜牛奶三十元，最便宜的冬瓜茶也要八元。\n\n佳穎很快點了四果冰。家豪盯著價目表假裝研究。雨婷則把菜單推回桌子中央。',choices:[['提議四個人合點一盤冰','shareice'],['替雨婷點一杯冬瓜茶','orderforher'],['只點自己的飲料','ownorder']]},
+ shareice:{speaker:'陳宇軒',text:'「不然點一盤大的，四個人吃。」\n\n「一盤哪夠家豪吃？」佳穎嘴上嫌棄，還是把剛點的四果冰改成了特大盤。\n\n冰送上來時，四支不同顏色的塑膠湯匙插在同一座碎冰上，糖水沿著盤緣慢慢積成淡淡的琥珀色。',effect:s=>{s.flags.sharedIce=true;s.memories.push('四支湯匙分食的一盤四果冰')},next:'tabletalk'},
+ orderforher:{speaker:'陳宇軒',text:'「再一杯冬瓜茶。」\n\n雨婷立刻搖頭。\n\n「不用，我不渴。」\n\n「都點了。」\n\n她看著送來的玻璃杯，雙手握住杯壁，小聲說了句謝謝。那杯茶她喝得很慢，一滴也沒有剩下。',effect:s=>{s.flags.boughtYutingTea=true;s.memories.push('雨婷沒有剩下一滴的冬瓜茶')},next:'tabletalk'},
+ ownorder:{text:'每個人各自點了東西。雨婷說自己不渴，只向老闆要了一杯白開水。\n\n佳穎把自己碗裡的蜜豆舀給她。\n\n「我不喜歡這個，妳幫我吃。」\n\n雨婷看了她一眼，沒有拆穿這個顯然臨時想出的理由。',effect:s=>s.flags.sawJiayingCare=true,next:'tabletalk'},
+ tabletalk:{text:'一開始，話題只在老師和功課之間打轉。誰上課最容易睡著、數學老師一堂課能說幾次「所以」、教官的假髮究竟是不是真的。\n\n笑聲漸漸變得自然。窗外的公車一輛輛經過，桌上的冰也從小山融成一盤帶著水果顏色的水。\n\n沒有人注意時間。',next:'pianotalk'},
+ pianotalk:{speaker:'李家豪',text:'「所以張佳穎，妳真的會彈鋼琴？」\n\n「什麼叫真的？我五歲就在學了好不好。」\n\n佳穎用湯匙在玻璃杯邊敲出一小段節奏。',choices:[['問她為什麼喜歡鋼琴','whypiano'],['開玩笑叫她下次表演','performpiano'],['說自己比較喜歡聽唱片','recordmusic']]},
+ whypiano:{speaker:'張佳穎',text:'「一開始是我媽叫我學的。」\n\n她想了一會兒。\n\n「可是心情很亂的時候，坐下來彈完一首，會覺得那些事情好像被整理好了。雖然有時候越彈越亂啦。」\n\n她說到最後一句時，視線短暫地落在宇軒身上，又很快轉開。',effect:s=>{s.flags.knowsWhyPiano=true;s.memories.push('佳穎說琴聲能整理混亂的心情')},next:'familytable'},
+ performpiano:{speaker:'陳宇軒',text:'「那妳下次在班上表演啊。」\n\n「可以啊，你先上去唱歌。」\n\n「為什麼是我？」\n\n「因為你看起來就很會唱走音。」\n\n佳穎笑得差點被冰嗆到。',effect:s=>s.flags.pianoTeasing=true,next:'familytable'},
+ recordmusic:{speaker:'陳宇軒',text:'「我比較喜歡聽唱片。彈琴感覺很累。」\n\n「所以你喜歡什麼？」佳穎立刻問。\n\n宇軒第一次發現，她不是隨口找話題；他說出的歌手和歌曲，她都會認真記住。',effect:s=>{s.flags.talkedMusic=true;s.memories.push('第一次和佳穎交換喜歡的音樂')},next:'familytable'},
+ familytable:{speaker:'張佳穎',text:'「我媽今天加班，我哥又待在研究室，所以我才可以在外面混這麼久。」\n\n她說得很自然，像家人忙碌只是生活中一件普通的小事。\n\n「妳哥念研究所？」宇軒問。\n\n「對啊，他最會念書了。但我媽沒有要我跟他一樣，她說我不要犯法就好。」\n\n家豪睜大眼睛。宇軒一時不知道，原來真的有父母會這樣說。',effect:s=>{s.flags.knowsJiayingFamilyOpen=true;s.memories.push('第一次知道不是所有父母都替孩子決定未來')},next:'yutingclock'},
+ yutingclock:{text:'牆上的鐘走到四點二十分。雨婷看了第三次手錶，把書重新抱進懷裡。\n\n「我差不多要回去了。」\n\n佳穎問她要不要一起去唱片行，她仍然搖頭。\n\n「我爸今天會早點回家。我得先去買晚餐的菜。」',choices:[['問她爸爸從事什麼工作','askfatherjob'],['不追問，只問要不要陪她去車站','walkstation'],['提醒大家自己六點前也得回家','remembercurfew']]},
+ askfatherjob:{speaker:'黃雨婷',text:'「在工地。」\n\n雨婷把牛皮紙袋的提繩纏在手指上。\n\n「他最近都在島南區那邊，很早出門，有時候很晚才回來。今天難得不用加班。」\n\n她說到父親時，聲音雖小，神情卻比平常安定。',effect:s=>{s.flags.knowsYutingFather=true;s.memories.push('雨婷提到父親難得不加班時的表情')},next:'leavestore'},
+ walkstation:{speaker:'陳宇軒',text:'「我們也走了。一起到車站吧。」\n\n雨婷原本像是想說不用，佳穎已經站起來替她拿走一本書。\n\n「四個人走比較慢，妳的公車才會等妳。」\n\n這個道理完全說不通，雨婷卻笑了。',effect:s=>s.flags.walkedGroupToBus=true,next:'leavestore'},
+ remembercurfew:{speaker:'陳宇軒',text:'「糟，我六點前也要到家。」\n\n「現在才四點多欸，媽寶。」佳穎說。\n\n「妳不懂。我家六點零一分跟半夜一樣嚴重。」\n\n家豪深有同感地點頭。只有雨婷笑得很小聲。',effect:s=>s.flags.talkedCurfew=true,next:'leavestore'},
+ leavestore:{location:'島北市・榕樹商圈',bg:'linear-gradient(150deg,#937962,#646d68 50%,#3a4647)',text:'離開冰果室時，外面的陽光已經不再刺眼。商店騎樓被拉成一段一段的長影，唱片行開始把音樂放到門外，塑膠喇叭讓歌聲帶著輕微的破音。\n\n四個人走得很慢。不是因為路遠，而是星期六下午似乎沒有誰真正急著結束。',next:'bookreturn'},
+ bookreturn:{speaker:'黃雨婷',text:'「宇軒。」\n\n到公車站前，雨婷從紙袋裡拿出一本書。\n\n「你昨天不是問這本好不好看嗎？我已經看完了，可以先借你。」\n\n牛皮紙書套被她包得很整齊，書脊上用鉛筆寫著作者名字。',choices:[['鄭重收下，答應看完還她','takebook'],['問她家裡是不是有很多書','asklibrary']]},
+ takebook:{speaker:'陳宇軒',text:'「我會小心看。」\n\n「不用那麼緊張啦。」雨婷笑了一下，「書就是要翻才有用。」\n\n公車進站時掀起一陣熱風。她上車後仍站在窗邊，直到車子轉過街角才坐下。',effect:s=>{s.flags.borrowedYutingBook=true;s.items.push('雨婷借的小說');s.memories.push('雨婷包著牛皮紙書套的小說')},next:'numbernote'},
+ asklibrary:{speaker:'黃雨婷',text:'「沒有很多。大部分是舊書攤買的，看完再換下一本。」\n\n她輕輕摸了摸書套。\n\n「這樣花一點點錢，就可以去很多沒去過的地方。」\n\n宇軒收下書，第一次覺得她所說的「很多地方」，也許和佳穎想像的不太一樣。',effect:s=>{s.flags.knowsYutingUsedBooks=true;s.items.push('雨婷借的小說');s.memories.push('雨婷說書能帶她去很多地方')},next:'numbernote'},
+ numbernote:{location:'島北市・公車站',speaker:'張佳穎',text:'雨婷的公車開走後，佳穎忽然在紙袋裡翻找。她撕下唱片行收據的空白背面，借宇軒的筆寫下一串數字。\n\n「這我家電話。」\n\n她把紙遞過來時故意裝得很隨便。\n\n「下次家豪再遲到，你可以打來問我有沒有在路上看到他的屍體。」',choices:[['收進皮夾最裡層','keepnumber'],['笑她家的電話又找不到家豪','jokenumber'],['問她為什麼突然給自己電話','asknumber']]},
+ keepnumber:{text:'宇軒把紙條對摺，收進皮夾透明夾層的最裡面。\n\n「幹嘛收那麼好？」\n\n「不然丟掉喔？」\n\n佳穎別開臉，假裝在看遠處的公車號碼。',effect:s=>{s.flags.hasJiayingPhone=true;s.items.push('寫著佳穎家電話的收據');s.memories.push('佳穎寫在唱片行收據背面的電話')},next:'walkapart'},
+ jokenumber:{speaker:'陳宇軒',text:'「可是打妳家又找不到家豪。」\n\n「你真的很不會抓重點欸。」佳穎一把想搶回紙條。宇軒笑著舉高手，她踮起腳也搆不到。\n\n家豪站在旁邊看了半天。\n\n「所以到底關我什麼事？」',effect:s=>{s.flags.hasJiayingPhone=true;s.items.push('被佳穎揉皺的電話紙條');s.memories.push('佳穎第一次給自己的家裡電話')},next:'walkapart'},
+ asknumber:{speaker:'陳宇軒',text:'「妳為什麼突然給我電話？」\n\n佳穎握著筆愣了一下。\n\n「同學之間有電話很正常吧？雨婷也有啊。」\n\n她把紙硬塞進宇軒手裡，語速忽然變快。\n\n「不要就還我。」\n\n宇軒還沒回答，她已經轉身往前走了。',effect:s=>{s.flags.hasJiayingPhone=true;s.flags.askedWhyNumber=true;s.items.push('寫著佳穎家電話的收據')},next:'walkapart'},
+ walkapart:{location:'島北市・黃昏',bg:'linear-gradient(155deg,#8b715d,#5b6461 48%,#354043)',text:'下一班公車來以前，三個人沿著騎樓繼續走。\n\n到了十字路口，佳穎往東，家豪往西，宇軒則要搭車回北邊。沒有群組可以在回家後延續剛才的話題，也不會有人傳來「到家了」的訊息。\n\n他們只是在綠燈亮起時揮揮手，約好星期一學校見，然後各自走進不同方向的人群。',next:'bushome'},
+ bushome:{location:'島北市公車・末排座位',text:'公車裡播放著司機自己的錄音帶。午後在冰果室聽過的旋律恰好再次出現，只是被引擎聲蓋去了一半。\n\n宇軒靠著微微震動的車窗，看商店招牌與路燈一盞盞向後退。口袋裡多了一本借來的小說、一張寫著電話的紙，還有許多他暫時不知道該怎麼命名的感覺。',next:'homeclock'},
+ homeclock:{location:'島北市・陳家門口',text:'五點五十七分。\n\n宇軒在最後三分鐘趕回家。廚房傳來鍋鏟碰到鐵鍋的聲音，父親的皮鞋卻還沒有出現在玄關。\n\n他站在門外喘勻呼吸，才拿出鑰匙。',next:'nightbook'},
+ nightbook:{location:'陳宇軒的房間・夜',bg:'linear-gradient(155deg,#5f5b54,#414947 52%,#272f31)',text:'洗完澡後，宇軒趴在床上翻開雨婷借他的小說。牛皮紙書套內側寫著一行很淡的名字：黃雨婷。\n\n讀到第三頁時，唱片行收據從皮夾裡滑了出來。佳穎的字比他想像中潦草，最後一個號碼還被她重描了兩次。\n\n桌上的電話就在客廳。現在打過去，好像太奇怪；完全不打，又不知道她為什麼特地給他。',choices:[['走到客廳，拿起電話','calljiayingnight'],['把紙條夾進小說，繼續讀','keepreading'],['先問妹妹女生給電話是什麼意思','asksistermeaning']]},
+ calljiayingnight:{location:'陳家・客廳',text:'宇軒走到電話旁。父親還沒回來，母親在浴室洗衣服，水聲隔著門傳來。\n\n他把手指放進轉盤，先撥了第一個號碼，卻在轉盤回彈以前鬆手。\n\n最後，他只是拿著沒有聲音的聽筒站了一會兒，再輕輕掛回去。',effect:s=>{s.flags.almostCalledJiaying=true;s.memories.push('第一次想打給佳穎，卻沒有撥完的電話')},next:'ch2end'},
+ keepreading:{text:'宇軒把紙條夾進小說第四頁。\n\n窗外偶爾有機車經過，燈光從窗簾縫隙掃過天花板。他努力把注意力放回故事，卻同一段讀了三次，還是不記得主角究竟說了什麼。',effect:s=>s.flags.numberInBook=true,next:'ch2end'},
+ asksistermeaning:{speaker:'陳以晴',text:'「女生給你電話？」\n\n以晴放下色鉛筆，用一種難得看見哥哥出糗的表情盯著他。\n\n「可能是要跟你借作業吧。」\n\n她說完就低頭繼續畫，肩膀卻一直抖。\n\n宇軒過了幾秒才發現她在偷笑。',effect:s=>s.flags.askedSisterAboutNumber=true,next:'ch2end'},
+ ch2end:{chapter:'第二章・完',date:'1988年9月10日｜星期六',location:'島北市・深夜',bg:'linear-gradient(155deg,#575651,#3d4645 52%,#252d2f)',text:'那一天沒有發生任何足以登上報紙的大事。\n\n只是四個剛認識不久的高中生，在一間普通的冰果室裡，共度了一個逐漸變暗的午後。\n\n許多年後，宇軒已經記不起四果冰究竟是什麼味道，也忘了回家那班公車的號碼。\n\n但他仍然記得，佳穎把電話寫在收據背面時，窗外剛好有一輛載滿學生的公車經過。\n\n那一瞬間的風，把她額前的頭髮吹得很亂。',next:'ch3title'},
+ ch3title:{chapter:'第三章｜一通沒有準備好的電話',date:'1988年9月11日｜星期日',location:'島北市・陳家',bg:'linear-gradient(155deg,#6b6258,#46504d 52%,#2a3335)',text:'星期日傍晚，天空從陽台鐵窗的縫隙裡慢慢暗下來。\n\n巷口有人叫賣烤香腸，遠處寺廟的鐘聲混著電視新聞片頭，一起飄進沒有關緊的窗戶。\n\n客廳那支米白色電話整整一下午都沒有響過。宇軒卻已經從它旁邊經過了七次。',next:'phonepaper'},
+ phonepaper:{text:'寫著佳穎家電話的收據被攤在國文課本裡。紙張折過兩次，中央留下淡白色的痕。\n\n宇軒早已把那串號碼背了起來，卻仍一次次拿出來確認，彷彿只要多看幾遍，就能順便知道電話接通後第一句該說什麼。',choices:[['現在就打，不要再想','callnow'],['先寫好要說的話','scriptcall'],['等晚一點再打','delaycall']]},
+ callnow:{location:'陳家・客廳',text:'宇軒趁母親在廚房切菜，拿起聽筒。\n\n轉盤一格一格彈回原位，機械聲在安靜的客廳裡顯得格外清楚。最後一個號碼撥完後，他忽然希望對面沒有人接。',effect:s=>s.flags.calledWithoutPlan=true,next:'ringing'},
+ scriptcall:{text:'宇軒撕下一張便條紙，認真寫下：\n\n一、問國文作文。\n二、問星期一要不要帶美術用品。\n三、不要讓她覺得很奇怪。\n\n寫到第三點時，他才發現那根本不是一句可以說出口的話。',effect:s=>{s.flags.wroteCallScript=true;s.items.push('寫著電話話題的便條紙')},next:'callfromroom'},
+ callfromroom:{location:'陳家・客廳',text:'他把便條紙壓在電話旁，照著收據撥號。等待接通時，紙上的字像忽然全部失去意義。',next:'ringing'},
+ delaycall:{text:'宇軒把紙條放回課本，告訴自己吃完晚飯再說。\n\n六點新聞結束，父親仍沒有回來。母親把最後一道菜端上桌；電話依舊安靜。\n\n七點十二分，他終於承認，再等下去只會更不敢打。',effect:s=>s.flags.delayedCall=true,next:'ringing'},
+ ringing:{text:'第一聲。\n\n第二聲。\n\n第三聲。\n\n每一聲之間都隔得太久，久到宇軒足以想像十種掛斷電話的理由。\n\n第四聲還沒響完，聽筒另一端傳來一名成熟女性的聲音。',next:'zhangmother'},
+ zhangmother:{speaker:'佳穎的母親',text:'「喂，張公館。」\n\n背景很安靜，隱約有杯盤輕碰的聲音。\n\n宇軒原本準備好的稱呼忽然全擠在喉嚨裡。',choices:[['「阿姨您好，請問佳穎在嗎？」','politecall'],['「呃……我找張佳穎。」','awkwardcall'],['一時緊張，沒有出聲','silentphone']]},
+ politecall:{speaker:'陳宇軒',text:'「阿姨您好，請問佳穎在嗎？我是她同學，陳宇軒。」\n\n「宇軒啊，等一下喔。」\n\n對方語氣自然得像早就聽過這個名字。宇軒還來不及細想，聽筒已被輕輕擱在桌上。',effect:s=>s.flags.impressedMother=true,next:'waitingline'},
+ awkwardcall:{speaker:'陳宇軒',text:'「呃……我找張佳穎。」\n\n「你是她同學嗎？」\n\n「對，我姓陳。」\n\n「好，稍等一下。」\n\n宇軒聽見自己的聲音乾得不像自己。',effect:s=>s.flags.awkwardWithMother=true,next:'waitingline'},
+ silentphone:{speaker:'佳穎的母親',text:'「喂？哪位？」\n\n宇軒握著聽筒，差點真的掛掉。\n\n「阿姨您好……我找佳穎。」\n\n說出口後，他像跑完一段很長的樓梯，悄悄吐了一口氣。',effect:s=>s.flags.frozeOnPhone=true,next:'waitingline'},
+ waitingline:{text:'遠處傳來女人喊「佳穎，妳同學」，接著是一陣由遠而近的腳步聲。\n\n等待的十幾秒裡，宇軒只能聽見張家客廳的時鐘、有人關上房門，以及聽筒被拿起前衣袖摩擦話筒的細響。',next:'jiayinghello'},
+ jiayinghello:{speaker:'張佳穎',text:'「喂？」\n\n和平常隔著一張課桌聽見的聲音不同。電話裡的佳穎近得像就在耳邊，卻又看不見她的表情。\n\n「陳宇軒？」',choices:[['「妳怎麼知道是我？」','howknow'],['照便條紙問國文作業','askhomework'],['「沒事，只是試試看號碼對不對。」','numbertest']]},
+ howknow:{speaker:'陳宇軒',text:'「妳怎麼知道是我？」\n\n「因為我媽剛剛說，一個講話很緊張、姓陳的男生找我。」\n\n「我哪有緊張？」\n\n佳穎的笑聲隔著電話線傳來，帶著一點細小的電流雜音。',effect:s=>s.flags.phoneLaugh=true,next:'firstsilence'},
+ askhomework:{speaker:'陳宇軒',text:'「國文作文是星期一早自習前交，對吧？」\n\n「對啊。」\n\n「喔。」\n\n「……你打電話來，就問這個？」\n\n宇軒低頭看便條紙，第一個話題已經用完了。',effect:s=>s.flags.usedHomeworkExcuse=true,next:'firstsilence'},
+ numbertest:{speaker:'陳宇軒',text:'「沒事，只是試試看妳有沒有寫錯號碼。」\n\n「那現在證明沒寫錯了，你可以掛了。」\n\n「喔，好。」\n\n「欸！你真的要掛喔？」\n\n佳穎自己先笑了出來。',effect:s=>s.flags.teasedOnPhone=true,next:'firstsilence'},
+ firstsilence:{text:'笑聲停下後，兩端同時安靜。\n\n電話讓人不必面對面，卻也拿走了所有可以用來掩飾尷尬的東西。沒有窗外可以指，沒有同學經過，也不能假裝整理桌上的課本。\n\n只剩彼此的呼吸，和不知道該由誰接下去的空白。',next:'topicchoice'},
+ topicchoice:{choices:[['問她新買的琴譜','talkscore'],['聊昨天冰果室的事','talkice'],['問雨婷是不是安全到家','talkyuting']]},
+ talkscore:{speaker:'陳宇軒',text:'「妳昨天買的琴譜，是什麼歌？」\n\n佳穎的聲音立刻有了精神。她說起一首最近在廣播裡常播的曲子，還抱怨其中一段左手和弦很難。\n\n宇軒其實聽不懂，卻沒有打斷。她說話時，偶爾會用手指在電話旁的桌面敲出節拍。',effect:s=>{s.flags.heardPianoDetails=true;s.memories.push('電話裡佳穎用手指敲出的節拍')},next:'musicpause'},
+ talkice:{speaker:'陳宇軒',text:'「昨天那盤冰，家豪吃掉一半吧。」\n\n「明明是你。而且你還把最後一顆櫻桃搶走。」\n\n兩個人為了一顆其實沒人記得歸誰的糖漬櫻桃爭了好幾分鐘。\n\n話題很無聊，卻讓剛才的沉默慢慢變得不再可怕。',effect:s=>s.flags.rememberedIceCall=true,next:'musicpause'},
+ talkyuting:{speaker:'陳宇軒',text:'「雨婷昨天有趕上公車吧？」\n\n「有，她到家有打給我。」\n\n佳穎停了一下。\n\n「她不太喜歡麻煩別人。你如果發現她沒點東西，也不要直接問她是不是沒錢，她會很難堪。」\n\n宇軒輕聲答應。',effect:s=>{s.flags.jiayingProtectsYuting=true;s.memories.push('佳穎在電話裡保護雨婷的自尊')},next:'musicpause'},
+ musicpause:{speaker:'張佳穎',text:'「你昨天說喜歡聽音樂，那你最喜歡哪一首？」\n\n宇軒靠著電話桌坐到地板上。這個問題沒有標準答案，他卻想了很久。\n\n兩人從一首歌聊到另一張錄音帶，又從歌詞聊到唱片封面。客廳時鐘的分針不知不覺走過半圈。',next:'whyphone'},
+ whyphone:{speaker:'陳宇軒',text:'「佳穎。」\n\n「嗯？」\n\n「妳昨天為什麼只給我電話？」\n\n聽筒另一邊忽然傳來椅腳輕輕刮過地面的聲音。',choices:[['等她回答，不急著補話','waitanswer'],['馬上說自己只是隨便問問','retreatquestion']]},
+ waitanswer:{speaker:'張佳穎',text:'「因為……」\n\n佳穎拖長了聲音。\n\n「家豪一定會把電話紙條弄丟，雨婷本來就知道我家號碼。剩下不就是你了？」\n\n答案很合理。她說完卻把話題轉得太快。',effect:s=>s.flags.askedPhoneReason=true,next:'motherinterrupt'},
+ retreatquestion:{speaker:'陳宇軒',text:'「算了，我只是隨便問問。」\n\n「什麼叫隨便問問？」\n\n「就……同學之間有電話很正常啊。」\n\n他借用了她昨天說過的話。佳穎安靜了一瞬，低低笑了一聲。\n\n「對啊，很正常。」',effect:s=>s.flags.retreatedPhoneQuestion=true,next:'motherinterrupt'},
+ motherinterrupt:{speaker:'媽媽',text:'「宇軒，電話講多久了？」\n\n母親的聲音從廚房傳來。宇軒連忙用手掌遮住話筒，卻知道佳穎一定已經聽見。\n\n「同學問功課啦！」\n\n電話那頭立刻傳來壓不住的笑聲。',next:'goodnightcall'},
+ goodnightcall:{speaker:'張佳穎',text:'「那陳同學，謝謝你教我功課喔。」\n\n「明明是我打去問妳。」\n\n「星期一見啦。」\n\n掛斷以前，兩個人又同時說了一次「拜拜」，接著同時停住，誰也沒有先把聽筒放下。\n\n最後是一聲很輕的喀噠。線路回到漫長的空白音。',effect:s=>{s.flags.firstCallComplete=true;s.memories.push('第一次與佳穎講了很久的電話')},next:'aftercall'},
+ aftercall:{text:'宇軒仍坐在電話桌旁。話筒已經掛好，耳朵裡卻像還留著她的聲音。\n\n便條紙上的三個話題，只用到第一個。第二、第三點被他的手汗暈開了一點。',next:'mondaygate'},
+ mondaygate:{chapter:'第三章｜星期一',date:'1988年9月12日｜星期一',location:'島北高中・校門',bg:'linear-gradient(150deg,#7a7669,#586963 50%,#354344)',text:'星期一早晨，校門口照例擠滿趕在鐘聲前進校的人。\n\n宇軒遠遠看見佳穎站在穿堂和雨婷說話。昨天在電話裡聊了半個多小時，現在真正見到面，反而不知道該用哪一種表情走過去。',choices:[['和平常一樣向她打招呼','normalhello'],['假裝沒看見，先找家豪','avoidhello'],['等她先注意到自己','waithello']]},
+ normalhello:{speaker:'陳宇軒',text:'「早。」\n\n佳穎抬起頭，也只回了一聲「早」。兩人都自然得有些刻意。\n\n雨婷看看佳穎，又看看宇軒，最後安靜地把目光放回手裡的單字本。',effect:s=>s.flags.normalAfterCall=true,next:'jiahaotease'},
+ avoidhello:{text:'宇軒低頭整理書包，繞向另一側樓梯。\n\n走到轉角時，身後傳來佳穎的聲音：\n\n「陳宇軒，你今天眼睛看不到人喔？」\n\n他只好又走回來。',effect:s=>s.flags.avoidedAfterCall=true,next:'jiahaotease'},
+ waithello:{speaker:'張佳穎',text:'「欸，陳同學。」\n\n她故意沿用昨晚電話裡的稱呼。\n\n「昨天的功課問題解決了嗎？」\n\n宇軒看見她嘴角忍著笑，便知道這件事大概會被她拿來講很久。',effect:s=>s.flags.jiayingCalledFirst=true,next:'jiahaotease'},
+ jiahaotease:{speaker:'李家豪',text:'「什麼功課？」\n\n家豪不知何時從後面冒出來，手裡咬著還沒吃完的飯糰。\n\n「我昨天怎麼都沒接到你們的學術討論？」\n\n佳穎把作業簿塞進他懷裡。\n\n「因為你連作文都還沒交。」',next:'careerclass'},
+ careerclass:{location:'島北高中・一年三班',speaker:'黃子芸',text:'第四節班會，黃子芸老師在黑板寫下「家庭與未來」。\n\n她沒有發志願調查表，只請每個人寫下父母從事的工作，以及自己是否想走同一條路。\n\n教室裡很快只剩原子筆劃過紙面的沙沙聲。',choices:[['照實寫父親是金融主管','writefather'],['只寫「公司職員」','hidefather'],['空著第二題，不寫未來','blankfuture']]},
+ writefather:{text:'宇軒寫下「金融業主管」。那幾個字看起來體面、穩定，也像一條早已替他鋪好的路。\n\n第二題，他停了很久，最後寫下「不知道」。',effect:s=>s.flags.wroteFatherJob=true,next:'teachercollect'},
+ hidefather:{text:'宇軒只寫了「公司職員」。\n\n父親每天穿西裝出門，很晚回家；至於他真正做什麼、為什麼總有忙不完的工作，宇軒其實沒有自己想像中了解。',effect:s=>s.flags.realizedFatherDistant=true,next:'teachercollect'},
+ blankfuture:{text:'父親的職業很容易填。真正困難的是下面那一格。\n\n宇軒讓它保持空白。窗外的體育課哨音響了幾次，仍沒有任何答案從腦中出現。',effect:s=>s.flags.leftFutureBlank=true,next:'teachercollect'},
+ teachercollect:{speaker:'黃子芸',text:'「我不是要替你們安排未來。」\n\n黃老師收起紙張。\n\n「我只是希望你們知道，父母的人生可以是參考，但不該是唯一答案。」\n\n教室後排，家豪低頭看著自己壓在課本下的棒球隊報名表。',effect:s=>s.flags.heardTeacherFuture=true,next:'afterclassphone'},
+ afterclassphone:{location:'島北高中・放學後',speaker:'張佳穎',text:'「你昨天掛電話以後，有沒有被你媽罵？」\n\n放學鐘響後，佳穎一邊擦黑板一邊問。粉筆灰在夕陽裡慢慢飄落。',choices:[['承認母親一直追問是誰','admitquestions'],['說只是普通同學，沒什麼','ordinaryfriend'],['反問她媽媽有沒有問','askhermother']]},
+ admitquestions:{speaker:'陳宇軒',text:'「她問了三次是哪個同學。」\n\n「那你怎麼說？」\n\n「作業股長。」\n\n佳穎轉過頭瞪他，臉上卻沾著一道自己沒發現的粉筆灰。',effect:s=>s.flags.toldMotherCadre=true,next:'chalkface'},
+ ordinaryfriend:{speaker:'陳宇軒',text:'「我就說普通同學啊。」\n\n佳穎擦黑板的手停了一下。\n\n「喔，普通同學。」\n\n她把這四個字說得很輕，接著用力拍了兩下板擦。',effect:s=>s.flags.calledOrdinary=true,next:'chalkface'},
+ askhermother:{speaker:'張佳穎',text:'「她只問你是不是上次幫我搬作業的人。」\n\n「妳有跟她提過我？」\n\n「就……聊天剛好講到啊。」\n\n佳穎背對他繼續擦黑板，耳朵卻慢慢紅了。',effect:s=>s.flags.mentionedAtJiayingHome=true,next:'chalkface'},
+ chalkface:{speaker:'陳宇軒',text:'「妳臉上有粉筆灰。」\n\n「哪裡？」\n\n佳穎用手背亂擦，反而把灰抹得更開。宇軒指了指自己的左臉，她卻擦了右邊。\n\n最後雨婷看不下去，拿手帕替她擦掉。',effect:s=>s.memories.push('夕陽裡佳穎臉上的粉筆灰'),next:'returncall'},
+ returncall:{location:'陳家・夜',text:'晚上八點零五分，家裡電話突然響了。\n\n母親接起後，只說了兩句便朝房間喊：\n\n「宇軒，女同學找你。」\n\n父親剛好坐在沙發上看報紙。報紙上緣緩慢降下來一點。',next:'jiayingcalls'},
+ jiayingcalls:{speaker:'張佳穎',text:'「喂，普通同學。」\n\n佳穎的聲音帶著一點惡作劇得逞的笑意。\n\n「我只是要告訴你，明天第一節數學小考。免得你又說沒人通知。」\n\n這通電話只有三分鐘。宇軒掛斷後，卻第一次意識到——那串號碼不只讓他能找到她，她也能穿過整座城市找到他。',effect:s=>{s.flags.jiayingCalledHome=true;s.memories.push('佳穎第一次主動打來家裡')},next:'ch3end'},
+ ch3end:{chapter:'第三章・完',date:'1988年9月12日｜星期一',location:'島北市・夜',bg:'linear-gradient(155deg,#5d5952,#404846 52%,#272f31)',text:'父親重新舉起報紙。母親在廚房關掉瓦斯。屋外有人騎著腳踏車經過，鈴聲在巷子裡留下一小段回音。\n\n宇軒回到房間，把佳穎的電話紙條從小說裡取出來。\n\n昨天以前，那只是一串數字。\n\n現在，它像是城市裡一扇剛剛被打開的門。',next:'ch4title'},
+ ch4title:{chapter:'第四章｜照片裡的星期六',date:'1988年9月17日｜星期六',location:'島北高中・清晨',bg:'linear-gradient(150deg,#7e7666,#586861 50%,#344242)',text:'星期六早上七點二十分，島北高中比平日安靜。\n\n沒有升旗音樂，也沒有成排的腳踏車。操場草地覆著一層薄薄的露水，遠處司令台的影子還很長。\n\n今天是棒球隊的新生測驗。',next:'tryoutgate'},
+ tryoutgate:{location:'島北高中・側門',text:'宇軒到側門時，家豪已經站在警衛室旁。\n\n他穿著國中留下的運動服，鞋帶重新綁過兩次，手裡那張報名表被仔細壓平，唯獨家長簽章仍舊空白。',choices:[['問他父親最後怎麼說','askfatherfinal'],['不提簽名，只陪他往球場走','walktryout'],['告訴他佳穎和雨婷也會來','tellfriendscome']]},
+ askfatherfinal:{speaker:'李家豪',text:'「沒怎麼說。」\n\n家豪把表格摺回去。\n\n「他把筆放在桌上，叫我自己想清楚。可是沒簽跟不准有什麼不一樣？」\n\n清晨的風吹動警衛室前的旗繩，金屬扣一下下敲著旗桿。',effect:s=>s.flags.knowsUnsignedForm=true,next:'teacherarrives'},
+ walktryout:{text:'宇軒沒有看那個空白的位置，只和家豪並肩往操場走。\n\n兩人的腳步踩過尚未乾透的跑道。家豪平常總有話說，今天卻一路沉默，只偶爾把手伸進口袋確認表格還在。',effect:s=>s.flags.silentWalkTryout=true,next:'teacherarrives'},
+ tellfriendscome:{speaker:'陳宇軒',text:'「佳穎跟雨婷說等一下會來。」\n\n「她們來幹嘛？」\n\n「佳穎說要看你丟臉。」\n\n家豪笑了一聲。肩膀終於不像剛才繃得那麼緊。',effect:s=>s.flags.toldSupporters=true,next:'teacherarrives'},
+ teacherarrives:{speaker:'黃子芸',text:'「你們兩個來得很早嘛。」\n\n黃老師從行政大樓方向走來，手裡拿著保溫杯和一疊資料。她不是棒球隊老師，今天也不需要值班。\n\n家豪看著她，一時說不出話。',next:'teacherknows'},
+ teacherknows:{speaker:'黃子芸',text:'「報名表的事，我知道。」\n\n她沒有伸手拿表格。\n\n「我跟教練談過了。今天可以先參加測驗，但正式入隊以前，還是必須有家長同意。」\n\n「老師，妳為什麼要幫我？」家豪問。',choices:[['站在旁邊聽老師回答','listenTeacher'],['替家豪說因為他真的想打球','speakDream']]},
+ listenTeacher:{speaker:'黃子芸',text:'「因為大人可以提醒你夢想有多困難，但不該連試一次的機會都拿走。」\n\n她說得很平靜，像這只是身為老師理所當然要做的事。\n\n家豪低頭把報名表交給她，手指微微發抖。',effect:s=>{s.flags.teacherHelpedTryout=true;s.memories.push('黃老師說不該拿走試一次的機會')},next:'fieldmorning'},
+ speakDream:{speaker:'陳宇軒',text:'「因為他是真的想打球。」\n\n家豪轉頭看他。黃老師笑了笑。\n\n「那就不要只讓朋友替你說。」\n\n家豪沉默片刻，終於自己開口：\n\n「老師，我想參加。」',effect:s=>{s.flags.jiahaoSaidDream=true;s.memories.push('家豪第一次在老師面前說想打球')},next:'fieldmorning'},
+ fieldmorning:{location:'島北高中・棒球場',bg:'linear-gradient(150deg,#8b8068,#637369 52%,#394847)',text:'球場的紅土剛灑過水，空氣裡有濕泥、青草和舊皮革混在一起的味道。\n\n十幾名新生沿著右外野線熱身。球落進手套的聲音一下一下散在空曠的校園裡。\n\n家豪領到一個褪色的號碼布：十七。',next:'girlsatfield'},
+ girlsatfield:{speaker:'張佳穎',text:'「十七號！」\n\n佳穎的聲音從鐵網外傳來。她穿著淡色便服，脖子上掛著一台銀色傻瓜相機。雨婷站在旁邊，替兩人提著早餐店的紙袋。\n\n家豪回頭看了一眼，立刻假裝不認識她們。',choices:[['走過去叫佳穎小聲一點','quietJiaying'],['接過雨婷手裡的早餐','takeBreakfast'],['留在鐵網旁看家豪熱身','watchWarmup']]},
+ quietJiaying:{speaker:'陳宇軒',text:'「妳小聲一點，他已經夠緊張了。」\n\n「我是在幫他加油欸。」\n\n佳穎把相機舉到眼前。快門喀嚓一聲，正好拍下家豪被滾地球穿過兩腿的瞬間。\n\n「這張一定要洗兩份。」',effect:s=>s.flags.jiayingEmbarrassingPhoto=true,next:'throwtest'},
+ takeBreakfast:{speaker:'黃雨婷',text:'「佳穎怕你們沒吃，買了四個飯糰。」\n\n紙袋底部還溫熱，淡淡的油條和胡椒味滲出來。\n\n「是妳提醒她的吧？」宇軒問。\n\n雨婷沒有回答，只把其中一個塞到他手裡。',effect:s=>{s.flags.yutingBroughtBreakfast=true;s.memories.push('鐵網旁仍溫熱的飯糰')},next:'throwtest'},
+ watchWarmup:{text:'宇軒站在鐵網旁。家豪做了幾次深呼吸，才把第一球傳出去。球路偏高，學長舉高手套才接住。\n\n第二球低了一點。第三球終於筆直鑽進胸前的手套。\n\n家豪沒有笑，只重新排回隊伍最後。',effect:s=>s.flags.watchedEveryThrow=true,next:'throwtest'},
+ throwtest:{text:'第一項是傳球。\n\n家豪平常在公園隨手丟球時看起來毫不費力，真正站上測驗線後，動作卻像被許多看不見的繩子綁住。\n\n第一球偏右，第二球彈地。教練在名冊上寫了什麼。',choices:[['隔著鐵網喊他平常說的口頭禪','callCatchphrase'],['不出聲，只在他看來時點頭','nodSupport']]},
+ callCatchphrase:{speaker:'陳宇軒',text:'「李家豪，不是說要當國手？」\n\n幾名新生回頭笑。家豪瞪了宇軒一眼，第三球卻終於放鬆地揮出手臂。\n\n白球筆直飛過紅土，被對面的手套牢牢接住。',effect:s=>s.flags.calledNationalDream=true,next:'battingtest'},
+ nodSupport:{text:'家豪回頭看向鐵網外。宇軒沒有喊話，只朝他點了一下頭。\n\n那是國中三年裡兩人早已熟悉的訊號：別想太多，做你會做的事。\n\n第三球乾淨地落進手套。',effect:s=>s.flags.quietTryoutSupport=true,next:'battingtest'},
+ battingtest:{text:'最後一項是打擊。\n\n家豪戴上尺寸稍大的頭盔，站進右打擊區。球棒在他手裡繞了一圈，鞋尖把紅土踩出兩道淺痕。\n\n教練拋出的第一球從外角進來。揮空。\n\n第二球，他又早了一點，只擦到球的下緣。',next:'beforethird'},
+ beforethird:{text:'鐵網外忽然安靜。\n\n佳穎放下相機，雨婷雙手抓著紙袋提把。宇軒看見家豪重新握緊球棒，又慢慢鬆開。\n\n第三顆球離開教練手掌。',next:'thirdswing'},
+ thirdswing:{text:'球棒與白球相遇的聲音並不巨大，卻乾淨得讓人立刻知道打中了。\n\n球越過二壘手頭頂，在右外野草地彈了一次，又一路滾到牆邊。\n\n家豪跑過一壘後才想起這只是測驗。他停下腳步，回頭時終於笑了。',effect:s=>{s.flags.jiahaoGoodHit=true;s.memories.push('家豪第三次揮棒後滾向外野的白球')},next:'coachdecision'},
+ coachdecision:{speaker:'棒球隊教練',text:'「李家豪。」\n\n測驗結束後，教練把他單獨叫到本壘後方。\n\n「動作很粗，沒受過正式訓練。但腳程、肩膀都不錯。」\n\n家豪站得筆直，連呼吸都放得很輕。',next:'conditionalplace'},
+ conditionalplace:{speaker:'棒球隊教練',text:'「我可以先留你的位置。」\n\n教練把報名表還給他。\n\n「星期一以前，把家長簽名帶來。沒有簽名，我不能讓你正式練。」\n\n希望與那個空白欄位，同時被交回家豪手中。',effect:s=>s.flags.jiahaoConditionalPlace=true,next:'aftertryout'},
+ aftertryout:{location:'島北高中・看台後方',text:'接近中午，太陽把水泥看台曬出乾燥的味道。四個人躲進看台後方的陰影，分掉已經冷掉的飯糰。\n\n家豪把號碼布放在膝上，反覆看著十七兩個字。\n\n「如果他還是不簽呢？」他問。',choices:[['說可以請黃老師陪他回家談','teacherVisit'],['告訴他至少現在知道自己選得上','heBelongs'],['不給答案，把最後一個飯糰遞給他','giveRiceball']]},
+ teacherVisit:{speaker:'陳宇軒',text:'「黃老師不是願意幫你嗎？請她跟你爸談看看。」\n\n家豪搖頭。\n\n「我不想每次都靠別人。」\n\n雨婷輕聲說：「讓別人陪你，不一定代表你沒有自己面對。」',effect:s=>s.flags.suggestedTeacherVisit=true,next:'cameraidea'},
+ heBelongs:{speaker:'陳宇軒',text:'「至少你現在知道，不是只有你自己覺得你可以。」\n\n家豪看向球場。學長們正在收拾球具，剛才那顆被他打到外野的球已混回整袋白球裡，再也分不出來。\n\n「嗯。」他說。這次沒有用笑聲帶過去。',effect:s=>{s.flags.toldJiahaoBelongs=true;s.memories.push('家豪知道自己真的能站上球場的中午')},next:'cameraidea'},
+ giveRiceball:{text:'宇軒沒有回答。誰都知道一句「一定有辦法」不能讓空白處自己出現簽名。\n\n他把最後一個飯糰遞過去。家豪接下，拆開紙包，四個人一起聽著包裝紙在安靜看台下發出的聲音。',effect:s=>s.flags.sharedQuietAfterTryout=true,next:'cameraidea'},
+ cameraidea:{speaker:'張佳穎',text:'「好啦，先拍一張。」\n\n佳穎站起來拍掉裙子上的灰，把銀色相機舉起。\n\n「今天至少有一件值得留下來的事。」\n\n家豪指著自己滿身紅土的運動服。\n\n「一定要現在？」',choices:[['請路過的學長替四人合照','groupPhoto'],['先替家豪單獨拍一張','jiahaoPortrait'],['說改天穿制服再拍','postponePhoto']]},
+ groupPhoto:{text:'宇軒叫住一名正要離開的學長。佳穎把相機交給對方，再小跑步回到三人身邊。\n\n四個人站得有些生疏。家豪手裡拿著十七號碼布，雨婷仍抱著那兩本書。快門按下前一秒，佳穎忽然伸手在宇軒頭上比了一個角。\n\n喀嚓。\n\n於是他們的第一張合照，沒有任何人好好看著鏡頭。',effect:s=>{s.flags.firstGroupPhoto=true;s.memories.push('四個人沒有好好看鏡頭的第一張合照')},next:'walkfromschool'},
+ jiahaoPortrait:{text:'佳穎讓家豪站到鐵網前，把號碼布舉在胸口。\n\n「不要笑得那麼假。」\n\n「我哪有？」\n\n就在家豪轉頭抱怨時，佳穎按下快門。照片裡留下的不是準備好的笑容，而是他剛剛真正打進球隊的那個上午。',effect:s=>{s.flags.jiahaoTryoutPhoto=true;s.memories.push('家豪拿著十七號碼布的照片')},next:'groupPhoto'},
+ postponePhoto:{speaker:'陳宇軒',text:'「改天穿制服再拍啦。」\n\n「改天是哪一天？」佳穎問。\n\n宇軒答不出來。雨婷看看逐漸收空的球場，小聲說：「今天只有一次。」\n\n最後他們還是請路過的學長按下快門。',effect:s=>s.flags.yutingSaidTodayOnce=true,next:'groupPhoto'},
+ walkfromschool:{location:'島北高中・校外坡道',bg:'linear-gradient(150deg,#95836a,#67736b 50%,#3c4948)',text:'離開學校時已過中午。陽光從行道樹葉間落下，在四人的衣服上忽明忽暗。\n\n家豪走在最前面，不時把手伸進口袋確認號碼布還在。佳穎跟著他，警告照片洗出來以前不准偷看。\n\n宇軒與雨婷落在後面半步。',next:'yutingbookmark'},
+ yutingbookmark:{speaker:'黃雨婷',text:'「宇軒，書看到哪裡了？」\n\n「快一半。」\n\n雨婷從手裡那本書抽出一張自己做的書籤。厚紙板上用藍色原子筆畫著一扇窗。\n\n「這張先給你，不然你一直把佳穎的電話紙條夾在裡面，會掉。」',choices:[['收下書籤','takebookmark'],['問她怎麼知道電話紙條','howknowsnote']]},
+ takebookmark:{speaker:'陳宇軒',text:'「謝謝。」\n\n宇軒把書籤夾進讀到的位置。窗戶畫得很小，裡面卻有一盞黃色的燈。\n\n「妳也會畫畫？」\n\n「不會。只是有時候讀完一本書，會想留一個記號。」',effect:s=>{s.flags.hasYutingBookmark=true;s.items.push('雨婷畫著窗戶的書籤');s.memories.push('雨婷送的窗戶書籤')},next:'oneweeklater'},
+ howknowsnote:{speaker:'黃雨婷',text:'「上次在公車站，我有看到佳穎寫給你。」\n\n「她有跟妳說什麼嗎？」\n\n雨婷想了一下，只把書籤遞過來。\n\n「她如果希望我說，就不會只寫給你了。」\n\n她的語氣仍然很輕，卻讓宇軒沒有再追問。',effect:s=>{s.flags.yutingKeepsSecrets=true;s.items.push('雨婷畫著窗戶的書籤')},next:'oneweeklater'},
+ oneweeklater:{date:'1988年9月23日｜星期五',location:'島北高中・一年三班',bg:'linear-gradient(150deg,#837565,#5d6964 52%,#384444)',text:'六天後，佳穎帶著洗好的照片來學校。\n\n底片沖洗店的紙袋被她藏在書包最底下，直到午休才神神祕祕地拿出來。照片帶著淡淡的藥水味，邊緣潔白而平整。',next:'photoresult'},
+ photoresult:{speaker:'張佳穎',text:'「先說，不准笑攝影師。」\n\n第一張是家豪接漏滾地球；第二張只有半顆棒球；第三張被手指遮住一角。\n\n最後一張才是四人的合照。學長按下快門時似乎手抖了一下，畫面有些模糊，佳穎還在宇軒頭頂比著角。',choices:[['說這張很好看','goodphoto'],['抱怨自己根本沒看鏡頭','badpose'],['注意到雨婷笑得比平常明顯','noticeYutingSmile']]},
+ goodphoto:{speaker:'陳宇軒',text:'「這張很好看啊。」\n\n「哪裡好看？都糊掉了。」\n\n「看得出來是我們就好。」\n\n佳穎低頭看著照片，沒有再嫌棄。',effect:s=>s.flags.likesImperfectPhoto=true,next:'photoCopies'},
+ badpose:{speaker:'陳宇軒',text:'「我根本沒看鏡頭。」\n\n「誰叫你反應那麼慢。」\n\n佳穎指著自己比出的角笑了很久。多年以後，宇軒反而最常看照片裡那個沒有看鏡頭的自己。',effect:s=>s.flags.complainedPhoto=true,next:'photoCopies'},
+ noticeYutingSmile:{text:'照片裡的雨婷沒有像平常那樣躲在別人身後。快門按下時，她正看著鬧成一團的三個人，笑得比鏡頭前任何一次都自然。\n\n宇軒第一次發現，有些人的快樂不是看著相機時才會出現。',effect:s=>{s.flags.noticedYutingSmile=true;s.memories.push('合照裡望著大家微笑的雨婷')},next:'photoCopies'},
+ photoCopies:{speaker:'張佳穎',text:'「我只洗了一張合照。」\n\n佳穎把照片放在四張桌子中間。\n\n「先放誰那裡？」\n\n四個人互相看了一會兒。家豪說自己一定會弄丟，雨婷說家裡沒有相簿。最後，照片被推到宇軒面前。',next:'keepphoto'},
+ keepphoto:{text:'宇軒把照片收進國文課本第一頁，正好壓在黃子芸老師開學時寫下的那句話旁邊：\n\n——你想成為什麼樣的人？\n\n照片裡的四個人都還不知道答案。\n\n甚至不知道，多年以後，彼此會走到多遠的地方。',effect:s=>{s.flags.keepsGroupPhoto=true;s.items.push('四人的第一張合照');s.memories.push('被收進國文課本的第一張合照')},next:'ch4end'},
+ ch4end:{chapter:'第四章・完',date:'1988年9月23日｜星期五',location:'島北高中・午後',bg:'linear-gradient(155deg,#686159,#48514e 52%,#2b3435)',text:'午後上課鐘響起，四個人各自回到座位。\n\n窗外的風翻動國文課本，照片從書頁間露出一小角。宇軒伸手把它重新夾好。\n\n他以為自己只是在保管一張普通的照片。\n\n那時候的他還不知道，有一天，照片上的白色邊緣會變黃，家豪胸前的十七號會慢慢褪色，而其中一個人的笑容，會讓他在很多年後仍然不敢看得太久。\n\n——《第五章：家長簽章》待續',end:true}
+};
+
+let state={scene:'intro',items:['零錢 42 元','學生證','家門鑰匙'],memories:[],flags:{},history:[],dialogueLog:[]};
+let sessionSave=null;
+const $=s=>document.querySelector(s),title=$('#title-screen'),game=$('#game-screen'),story=$('#story'),overlay=$('#overlay'),peopleOverlay=$('#people-overlay'),logOverlay=$('#log-overlay');
+function readSave(){try{return localStorage.getItem(SAVE_KEY)}catch(e){return sessionSave}}
+function writeSave(value){try{localStorage.setItem(SAVE_KEY,value)}catch(e){sessionSave=value}}
+function hasSave(){return !!readSave()}
+function updateContinue(){ $('#continue-game').disabled=!hasSave() }
+function showGame(){title.classList.remove('active');game.classList.add('active');render()}
+function newGame(){state={scene:'intro',items:['零錢 42 元','學生證','家門鑰匙'],memories:[],flags:{},history:[],dialogueLog:[]};showGame()}
+function save(show=true){writeSave(JSON.stringify(state));updateContinue();if(show)toast('已儲存')}
+function load(){try{const raw=readSave();if(!raw)throw new Error('no save');state=JSON.parse(raw);state.items=state.items||[];state.memories=state.memories||[];state.flags=state.flags||{};state.history=state.history||[];state.dialogueLog=state.dialogueLog||[];showGame()}catch(e){newGame()}}
+function recordCurrent(){const s=scenes[state.scene];if(!s)return;state.dialogueLog=state.dialogueLog||[];state.dialogueLog.push({chapter:s.chapter||'',speaker:s.speaker||'',text:s.text||'',date:s.date||$('#date').textContent,location:s.location||$('#location').textContent});state.dialogueLog=state.dialogueLog.slice(-2)}
+function go(id){const current=scenes[state.scene];recordCurrent();state.history.push(state.scene);state.scene=id;const s=scenes[id];if(s.effect&&!state.flags['effect_'+id]){s.effect(state);state.flags['effect_'+id]=true}save(false);render()}
+function render(){const s=scenes[state.scene];$('#chapter').textContent=s.chapter||'';$('#speaker').textContent=s.speaker||'';$('#text').textContent=s.text;$('#date').textContent=s.date||nearest('date');$('#location').textContent=s.location||nearest('location');if(s.bg)$('#app').style.setProperty('--scene-bg',s.bg);const c=$('#choices');c.innerHTML='';if(s.choices){s.choices.forEach((x,i)=>{const b=document.createElement('button');b.className='choice';b.innerHTML=`<span>${String.fromCharCode(65+i)}</span>${x[0]}`;b.onclick=()=>go(x[1]);c.appendChild(b)})}else if(s.next){const b=document.createElement('button');b.className='continue';b.textContent='繼續 ›';b.onclick=()=>go(s.next);c.appendChild(b)}else if(s.end){const b=document.createElement('button');b.className='continue';b.textContent='回到標題';b.onclick=toTitle;c.appendChild(b)}story.scrollTop=0}
+function nearest(key){let id=state.scene;const seen=new Set;while(id&&!seen.has(id)){seen.add(id);if(scenes[id][key])return scenes[id][key];const idx=state.history.lastIndexOf(id);id=idx>0?state.history[idx-1]:state.history[state.history.length-1]}return key==='date'?'1988年9月1日':'島北市'}
+function toTitle(){game.classList.remove('active');title.classList.add('active');updateContinue()}
+function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1300)}
+function visited(...ids){return ids.some(id=>state.scene===id||state.history.includes(id))}
+function personLine(label,value,known=true){return `<div class="person-line"><div class="person-label">${label}</div><div class="person-value ${known?'':'unknown'}">${known?value:'還不知道'}</div></div>`}
+function person(name,role,lines){return `<section class="person"><div class="person-head"><div class="person-name">${name}</div><div class="person-role">${role}</div></div>${lines.join('')}</section>`}
+function renderPeople(){
+  const p=[];
+  p.push(person('陳以晴','妹妹・島北國中',[personLine('印象','小宇軒兩歲。有時很吵，但似乎比自己更清楚喜歡什麼。'),personLine('興趣','喜歡畫畫；談起畫畫時，眼神會變得不太一樣。',!!state.flags.sisterArt),personLine('畫裡的世界','她說，下雨的房子仍有橘色屋頂，是因為裡面有人。',!!state.flags.sawSisterPainting)]));
+  p.push(person('李家豪','死黨・同班同學',[personLine('關係','從國中起就是同班同學，總是繞在自己身邊。'),personLine('印象','外向、愛鬧，很討厭讀書；棒球和籃球是他最擅長的事。'),personLine('夢想','想靠打球過一輩子，也許還想成為國手。',visited('dream','national','support','deflect')),personLine('家裡','父親認為體育沒有出路，不願在棒球隊報名表上簽名。',!!state.flags.knowsJiahaoFamilyPressure),personLine('棒球隊','通過新生測驗，教練願意保留位置，但正式入隊仍缺家長簽名。',!!state.flags.jiahaoConditionalPlace),personLine('真正想法','嘴上總說只是講講，其實他很想參加入隊測驗。',!!state.flags.heardTrueDream||!!state.flags.jiahaoSaidDream)]));
+  if(visited('meetGirls','introduce','escape','lateclass','collect','helpcollect','jiahaowork','canteen')){
+    p.push(person('張佳穎',visited('lateclass','collect')?'同班同學・作業股長':'同班同學',[personLine('印象','說話直接、愛開玩笑，和誰都能很快聊起來。',visited('meetGirls','jokehelp','drinkhelp')),personLine('興趣',state.flags.knowsWhyPiano?'五歲開始學鋼琴；她說琴聲有時能整理混亂的心情。':'平常會練鋼琴。',!!state.flags.knowsPiano||!!state.flags.knowsWhyPiano),personLine('家庭','和母親、哥哥同住。母親任職外商公司，哥哥正在念研究所；家裡很少替她決定未來。',!!state.flags.knowsJiayingFamilyOpen),personLine('聯絡方式',state.flags.firstCallComplete?'家裡電話已取得；曾經聊到忘記時間，她也主動打來過。':'家裡電話已取得。',!!state.flags.hasJiayingPhone),personLine('最近發現','她會認真記住別人喜歡的音樂，也很在意朋友的感受。',!!state.flags.talkedMusic||!!state.flags.jiayingProtectsYuting)]));
+  }
+  if(visited('meetGirls','toSeat','corridor','helpyuting','calljiaying','asklate')){
+    p.push(person('黃雨婷','同班同學・班長',[personLine('印象','安靜、容易緊張，做事很認真。',visited('corridor','helpyuting','asklate')),personLine('興趣',state.flags.knowsYutingUsedBooks?'喜歡讀小說，常從舊書攤買書，看完再換下一本。':'喜歡讀小說，讀過不少自己也喜歡的作者。',!!state.flags.bookBond||!!state.flags.knowsYutingUsedBooks),personLine('生活','放學似乎總是很趕，也很在意身上帶了多少錢。',visited('busmoney','lendmoney','walkbus','letgo')),personLine('家庭','和在工地工作的父親同住。父親經常加班，但她提起他時神情很安心。',!!state.flags.knowsYutingFather),personLine('最近發現','很尊重朋友不想說出口的事，也不會拿別人的秘密換取親近。',!!state.flags.yutingKeepsSecrets)]));
+  }
+  if(visited('teacher','question','write','dismiss','noanswer')){
+    p.push(person('黃子芸','一年三班導師',[personLine('印象','不像其他老師急著用成績判斷學生。'),personLine('說過的話','「畢業以前，至少要有勇氣替自己想一次。」',visited('question','write','dismiss','noanswer')),personLine('做過的事','替家豪向棒球隊教練爭取參加測驗的機會。',!!state.flags.teacherHelpedTryout),personLine('背景','除了是班導師以外，還不太了解。',false)]));
+  }
+  if(visited('zhangmother','politecall','awkwardcall','silentphone'))p.push(person('佳穎的母親','張家家長',[personLine('印象','接電話時語氣自然、從容，似乎不會因為男同學打來就責問佳穎。'),personLine('工作','任職外商公司，經常加班。',!!state.flags.knowsJiayingFamilyOpen),personLine('姓名','宇軒還不知道。',false)]));
+  $('#people-list').innerHTML=p.join('');
+}
+function renderLog(){const logs=(state.dialogueLog||[]).slice().reverse();$('#log-list').innerHTML=logs.length?logs.map((x,i)=>`<section class="log-entry"><div class="log-meta">${i===0?'上一頁':'前兩頁'}　${x.date||''}${x.location?'｜'+x.location:''}</div>${x.speaker?`<div class="log-speaker">${x.speaker}</div>`:''}<div class="log-text">${x.text}</div></section>`).join(''):'<div class="person-value unknown">目前還沒有可以回看的內容。</div>'}
+$('#new-game').onclick=()=>{if(hasSave()&&!confirm('開始新故事會覆蓋目前進度，確定嗎？'))return;newGame()};$('#continue-game').onclick=load;$('#save-btn').onclick=()=>save(true);$('#title-btn').onclick=toTitle;
+$('#more-games').onclick=()=>window.open('https://linktr.ee/LeoTsai0409','_blank','noopener,noreferrer');
+$('#people-btn').onclick=()=>{renderPeople();peopleOverlay.classList.add('show')};$('#close-people').onclick=()=>peopleOverlay.classList.remove('show');peopleOverlay.onclick=e=>{if(e.target===peopleOverlay)peopleOverlay.classList.remove('show')};
+$('#log-btn').onclick=()=>{renderLog();logOverlay.classList.add('show')};$('#close-log').onclick=()=>logOverlay.classList.remove('show');logOverlay.onclick=e=>{if(e.target===logOverlay)logOverlay.classList.remove('show')};
+$('#status-btn').onclick=()=>{$('#status-list').innerHTML=`<dt>姓名</dt><dd>陳宇軒</dd><dt>年齡</dt><dd>16 歲</dd><dt>現金</dt><dd>42 元</dd><dt>物品</dt><dd>${state.items.join('、')}</dd><dt>記得的事</dt><dd>${state.memories.length?state.memories.join('；'):'還沒有特別記住的事'}</dd>`;overlay.classList.add('show')};
+$('#close-overlay').onclick=()=>overlay.classList.remove('show');overlay.onclick=e=>{if(e.target===overlay)overlay.classList.remove('show')};updateContinue();
+</script>
+</body>
+</html>
